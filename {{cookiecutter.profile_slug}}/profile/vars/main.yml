@@ -1,0 +1,33 @@
+---
+# osx_provisioner.homebrew-retry
+brew_user: "{{ lookup('env', 'USER') }}"
+brew_retries: 3
+brew_packages:
+  - awscli
+brew_casks:
+  - google-chrome
+brew_taps: []
+
+# osx_provisioner.asdf
+asdf_user: "{{ lookup('env', 'USER') }}"
+asdf_user_home: "{{ lookup('env', 'HOME') }}"
+asdf_homebrew_retries: 3
+asdf_plugins:
+  - name: "nodejs"
+    repository: ""
+    versions:
+      - 14.15.0
+    global: 14.15.0
+  - name: "python"
+    repository: ""
+    environment:
+      PYTHON_CONFIGURE_OPTS: "--enable-framework"
+    versions:
+      - 3.8.10
+    global: 3.8.10
+
+# Default Language Packages
+default_python_packages:
+  - cookiecutter
+  - commitizen
+  - poetry

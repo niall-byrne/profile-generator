@@ -1,0 +1,10 @@
+.idea
+poetry.lock
+roles
+state.json
+.tool-versions
+
+# Ansible Runner Content
+profile/env
+profile/artifacts
+profile/inventory

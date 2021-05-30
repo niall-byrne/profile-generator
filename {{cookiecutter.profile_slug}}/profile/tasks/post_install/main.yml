@@ -1,0 +1,31 @@
+---
+- name: Set asdf_source Variable
+  set_fact:
+    "asdf_source": "{{ asdf_user_home }}/.asdf/asdf.sh"
+
+- name: Enable asdf pip
+  become: True
+  become_user: "{{ asdf_user }}"
+  command: "bash -lc 'source {{ asdf_source }}; asdf reshim python'"
+  changed_when: true
+  args:
+    creates: "{{ asdf_user_home }}/.asdf/shims/pip"
+    chdir: "{{ asdf_user_home }}"
+
+- name: Install Default Python Packages
+  become: True
+  become_user: "{{ asdf_user }}"
+  pip:
+    executable: "{{ asdf_user_home }}/.asdf/shims/pip"
+    name: "{{ default_python_packages }}"
+  register: pip_installation
+
+- name: Reshim asdf Python
+  become: True
+  become_user: "{{ asdf_user }}"
+  command: "bash -lc 'source {{ asdf_source }}; asdf reshim python'"
+  changed_when: true
+  args:
+    chdir: "{{ asdf_user_home }}"
+  notify:
+    - Reshim asdf

@@ -1,0 +1,11 @@
+{{cookiecutter.profile_slug}}
+
+{{cookiecutter.description}}
+
+=== Pre-Installation
+
+Add some pre-installation notes for the end user.
+
+=== Post-Installation
+
+Add some post-installation notes here.

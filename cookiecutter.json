@@ -1,0 +1,13 @@
+{
+    "profile_name": "Profile Example",
+    "profile_slug": "{{ cookiecutter.profile_name|slugify }}",
+    "description": "An example Mac Maker profile.",
+    "github_handle": "osx-provisioner",
+    "author": "Niall Byrne",
+    "email": "niall@niallbyrne.ca",
+    "_copy_without_render": [
+        "profile/vars/*.yml",
+        "profile/tasks/post_install/*.yml",
+        "profile/handlers/*.yml"
+    ]
+}

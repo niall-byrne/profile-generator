@@ -1,0 +1,350 @@
+---
+name: profile-generator-self-test
+
+# Required GitHub Repository Secrets:
+# REMOTE_TOKEN      - GitHub Token With Access To This Repo
+# REMOTE_ORIGIN     - The git remote repository name (organization/repo)
+# SLACK_WEBHOOK     - The slack webhook for build notifications
+
+on:
+  push:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+jobs:
+
+  documentation_test:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.8]
+
+    steps:
+
+      - name: Documentation Test -- Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          path: 'template'
+      - name: Documentation Test -- Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Documentation Test -- Setup Environment / Render Template
+        run: |
+          source ./template/.github/scripts/setup.sh
+          source ./template/.github/scripts/template.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Documentation Test -- Check Markdown Links For Readme
+        uses: gaurav-nelson/github-action-markdown-link-check@1.0.11
+        with:
+          use-quiet-mode: 'no'
+          use-verbose-mode: 'yes'
+          folder-path: 'template, template/.github/workflows'
+          max-depth: 1
+      - name: Documentation Test -- Check Markdown Links For Rendered Template
+        uses: gaurav-nelson/github-action-markdown-link-check@1.0.11
+        with:
+          use-quiet-mode: 'no'
+          use-verbose-mode: 'yes'
+          folder-path: ${{ env.TEMPLATED_NAME }}
+          max-depth: -1
+
+      - name: Documentation Test -- Report Job Status on Success
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: documentation checks succeeded!"
+      - name: Documentation Test -- Report Job Status on Failure
+        if: failure()
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: documentation checks failed!"
+
+  ansible_lint_test:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.8]
+
+    steps:
+
+      - name: Ansible Lint -- Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          path: 'template'
+      - name: Ansible Lint -- Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Ansible Lint -- Setup Environment / Render Template
+        run: |
+          source ./template/.github/scripts/setup.sh
+          source ./template/.github/scripts/template.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Ansible Lint -- Lint Rendered Template With Default Scenario
+        run: |
+          cd ${TEMPLATED_NAME}/profile
+          poetry run ansible-galaxy install -r requirements.yml
+          poetry run ansible-lint install.yml --exclude ${HOME}/.ansible/roles/
+
+      - name: Ansible Lint -- Report Job Status on Success
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: ansible linting checks succeeded!"
+      - name: Ansible Lint -- Report Job Status on Failure
+        if: failure()
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: ansible linting checks failed!"
+
+  push_repository_test:
+    needs: [documentation_test, ansible_lint_test, security_test, shellcheck_test, workflow_lint_test]
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.8]
+
+    steps:
+
+      - name: Push Test -- Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          path: 'template'
+          persist-credentials: false
+      - name: Push Test -- Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Push Test -- Setup Environment / Render Template
+        run: |
+          source ./template/.github/scripts/setup.sh
+          source ./template/.github/scripts/template.sh "GitHub Action" "action@github.com"
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Push Test -- Clean Up Tags for Git Push
+        run: |
+          cd ${TEMPLATED_NAME}
+          git checkout master
+          git tag --delete v0.0.0  # Don't Repush
+          git tag v1.0.0
+      - name: Push Test -- Push To Test Repository (master)
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.REMOTE_TOKEN }}
+          branch: master
+          tags: false
+          directory: ${{ env.TEMPLATED_NAME }}
+          repository: ${{ secrets.REMOTE_ORIGIN }}
+          force: true
+      - name: Push Test -- Push To Test Repository (production)
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.REMOTE_TOKEN }}
+          branch: production
+          tags: false
+          directory: ${{ env.TEMPLATED_NAME }}
+          repository: ${{ secrets.REMOTE_ORIGIN }}
+          force: true
+      - name: Push Test -- Push To Test Repository (release tag)
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.REMOTE_TOKEN }}
+          branch: production
+          tags: true
+          directory: ${{ env.TEMPLATED_NAME }}
+          repository: ${{ secrets.REMOTE_ORIGIN }}
+          force: true
+
+      - name: Push Test -- Report Job Status on Success
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: push has been triggered!"
+      - name: Push Test -- Report Job Status on Failure
+        if: failure()
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: push failed to trigger!"
+
+  releases:
+    needs: [push_repository_test]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create Release -- Checkout Repository
+        uses: actions/checkout@v1
+      - name: Create Release -- Setup Environment
+        if: contains(github.ref, '/tags/v')
+        run: |
+          source .github/scripts/setup.sh
+          echo "{}" > package.json
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Create Release -- Generate Changelog
+        if: contains(github.ref, '/tags/v')
+        uses: scottbrenner/generate-changelog-action@1.0.3
+        id: Changelog
+        env:
+          REPO: ${{ github.repository }}
+      - name: Create Release -- Create GitHub Release
+        if: contains(github.ref, '/tags/v')
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.BRANCH_OR_TAG }}
+          release_name: Release ${{ env.BRANCH_OR_TAG }}
+          body: |
+            ${{ steps.Changelog.outputs.changelog }}
+            ## Deployment Checklist
+            - [ ] Ensure correct version is notated
+            - [ ] Ensure documentation is accurate
+            - [ ] Ensure git commits are properly formatted
+          draft: true
+          prerelease: false
+
+      - name: Create Release -- Report Job Status on Success
+        if: contains(github.ref, '/tags/v')
+        run: |
+          ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: automated release has been created!\nhttps://github.com/${USERNAME}/${PROJECT_NAME}/releases"
+      - name: Create Release -- Report Job Status on Failure
+        if: failure()
+        run: |
+          ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: automated release creation has failed!"
+
+  security_test:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.8]
+
+    steps:
+
+      - name: Security Test -- Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          path: 'template'
+      - name: Security Test -- Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Security Test -- Setup Environment / Render Template
+        run: |
+          source ./template/.github/scripts/setup.sh
+          source ./template/.github/scripts/template.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Security Test -- Run Gitleaks
+        uses: zricethezav/gitleaks-action@master
+
+      - name: Security Test -- Check Dependencies
+        run: |
+          pip install --upgrade pip safety
+          cd "${TEMPLATED_NAME}"
+            poetry install
+            safety check
+          cd ..
+
+      - name: Security Test -- Report Job Status on Success
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: security checks succeeded!"
+      - name: Security Test -- Report Job Status on Failure
+        if: failure()
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: security checks failed!"
+
+  shellcheck_test:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.8]
+
+    steps:
+      - name: Shellcheck -- Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          path: 'template'
+      - name: Shellcheck -- Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Shellcheck -- Setup Environment / Render Template
+        run: |
+          source ./template/.github/scripts/setup.sh
+          source ./template/.github/scripts/template.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Shellcheck -- Shellcheck Scripts
+        run: |
+          shellcheck ./template/hooks/*.sh
+          shellcheck ./template/.github/scripts/*.sh
+      - name: Shellcheck -- Shellcheck Rendered Scripts
+        run: |
+          shellcheck ${TEMPLATED_NAME}/.github/scripts/*.sh
+
+      - name: Shellcheck -- Report Job Status on Success
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: shellcheck checks succeeded!"
+      - name: Shellcheck -- Report Job Status on Failure
+        if: failure()
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: shellcheck checks failed!"
+
+  workflow_lint_test:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.8]
+
+    steps:
+
+      - name: Workflow Lint -- Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          path: 'template'
+      - name: Workflow Lint -- Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Workflow Lint -- Setup Environment / Render Template
+        run: |
+          source ./template/.github/scripts/setup.sh
+          source ./template/.github/scripts/template.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Workflow Lint -- Lint Workflows
+        run: |
+          yamllint -f standard ./template/.github/workflows -c ./${TEMPLATED_NAME}/profile/.yamllint
+
+      - name: Workflow Lint -- Lint Rendered Template Workflows
+        run: |
+          yamllint -f standard ./${TEMPLATED_NAME}/.github/workflows/*.yml -c ./${TEMPLATED_NAME}/profile/.yamllint
+
+      - name: Workflow Lint -- Report Job Status on Success
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: workflow linting checks succeeded!"
+      - name: Workflow Lint -- Report Job Status on Failure
+        if: failure()
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: workflow linting checks failed!"

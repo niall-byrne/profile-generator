@@ -1,0 +1,7 @@
+---
+- name: Reshim asdf
+  become: True
+  become_user: "{{ asdf_user }}"
+  command: "bash -lc 'source {{ asdf_source }}; asdf reshim python'"
+  args:
+    chdir: "{{ asdf_user_home }}"
