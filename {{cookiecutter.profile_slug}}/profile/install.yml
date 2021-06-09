@@ -12,6 +12,8 @@
       include_vars: "vars/main.yml"
 
   roles:
+    - elliotweiser.osx-command-line-tools
+    - geerlingguy.mac.homebrew
     - osx_provisioner.homebrew_retry
     - osx_provisioner.clamav
     - osx_provisioner.asdf

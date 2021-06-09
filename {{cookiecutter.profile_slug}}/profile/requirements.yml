@@ -1,12 +1,13 @@
 ---
 roles:
-  - src: elliotweiser.osx-command-line-tools
+  - name: elliotweiser.osx-command-line-tools
     version: 2.3.0
-  - src: geerlingguy.homebrew
-    version: 3.1.0
-  - src: osx_provisioner.homebrew_retry
-    version: v0.1.1
-  - src: osx_provisioner.asdf
-    version: v0.1.0
-  - src: osx_provisioner.clamav
-    version: v0.1.0
+  - name: osx_provisioner.homebrew_retry
+    version: v0.2.0
+  - name: osx_provisioner.asdf
+    version: v0.2.0
+  - name: osx_provisioner.clamav
+    version: v0.2.0
+collections:
+  - name: geerlingguy.mac
+    version: 1.1.2
