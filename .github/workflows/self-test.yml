@@ -136,7 +136,7 @@ jobs:
           cd ${TEMPLATED_NAME}
           git checkout master
           git tag --delete v0.0.0  # Don't Repush
-          git tag v1.0.0
+          git tag v0.1.0
       - name: Push Test -- Push To Test Repository (master)
         uses: ad-m/github-push-action@v0.6.0
         with:
