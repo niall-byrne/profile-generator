@@ -51,7 +51,7 @@ There some configuration files you can fine tune as you see fit, they require mo
 
  - [.ansible-lint](profile/.ansible-lint)
    - This is configuration for [ansible-lint](https://ansible-lint.readthedocs.io/en/latest/), which is used in the included GitHub CI pipeline.
- - [.yamllint](profile/.yamllint)               
+ - [.yamllint.yml](profile/.yamllint.yml)               
    - This is configuration for [yamllint](https://yamllint.readthedocs.io/en/stable/), which is used in the included GitHub CI pipeline.
 
 ## Profile Precheck Folder

@@ -191,7 +191,7 @@ jobs:
 
       - name: Create Release -- Generate Changelog
         if: contains(github.ref, '/tags/v')
-        uses: scottbrenner/generate-changelog-action@1.0.3
+        uses: scottbrenner/generate-changelog-action@v1.3.1
         id: Changelog
         env:
           REPO: ${{ github.repository }}
@@ -310,10 +310,6 @@ jobs:
   workflow_lint_test:
 
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.8]
 
     steps:
 
@@ -333,13 +329,19 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Workflow Lint -- Lint Workflows
-        run: |
-          yamllint -f standard ./template/.github/workflows -c ./${TEMPLATED_NAME}/profile/.yamllint
+      - name: Workflow Lint -- Lint Template Workflows
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          format: standard
+          file_or_dir: ./template/.github/workflows
+          config_file: ./${{ env.TEMPLATED_NAME }}/profile/.yamllint.yml
 
-      - name: Workflow Lint -- Lint Rendered Template Workflows
-        run: |
-          yamllint -f standard ./${TEMPLATED_NAME}/.github/workflows/*.yml -c ./${TEMPLATED_NAME}/profile/.yamllint
+      - name: Workflow Lint -- Lint Rendered Workflows
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          format: standard
+          file_or_dir: ./${{ env.TEMPLATED_NAME }}/.github/workflows/
+          config_file: ./${{ env.TEMPLATED_NAME }}/profile/.yamllint.yml
 
       - name: Workflow Lint -- Report Job Status on Success
         run: |
