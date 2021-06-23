@@ -10,15 +10,17 @@
 
 ## Quick Start Guide
 
-### 1. First make sure you're using Python 3.8 or later.
+### 1. First make sure you're using Python 3.6.1 or later.
 - `pip install cookiecutter poetry`
 - `cookiecutter https://github.com/osx-provisioner/mac_maker.git --checkout v0.2.0`
+
+Warning: [Ansible is moving towards Python 3.8 soon](https://github.com/ansible/ansible/issues/72668).
 
 ### 2. Give your project a name, and populate the other required template inputs.
 - [Cookiecutter](https://cookiecutter.readthedocs.io/) will prompt you to enter some information such as the Profile's name, and your GitHub user handle. 
 
 ### 3. Wait for the Template to Render and the Virtual Environment to be Generated.
-- A [virtualenv](https://docs.python.org/3.8/library/venv.html) will be created for you automatically using [Poetry](https://python-poetry.org/).
+- A [virtualenv](https://docs.python.org/3.6/library/venv.html) will be created for you automatically using [Poetry](https://python-poetry.org/).
 
 ### 4. Start Customizing.
 - `cd <your new project director>`

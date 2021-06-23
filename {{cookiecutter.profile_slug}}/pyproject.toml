@@ -1,21 +1,18 @@
+[tool.poetry]
+authors = ["{{cookiecutter.author}} <{{cookiecutter.email}}>"]
+description = "{{cookiecutter.description}}"
+name = "{{cookiecutter.profile_slug}}"
+version = "0.0.1"
+
+[tool.poetry.dependencies]
+python = ">=3.6.1,<4.0"
+
+[tool.poetry.dev-dependencies]
+ansible = "^4.1.0"
+ansible-lint = "^5.0.8"
+commitizen = "^2.17.6"
+yamllint = "^1.26.1"
 
 [build-system]
-  build-backend = "poetry.core.masonry.api"
-  requires = ["poetry-core>=1.0.0"]
-
-[tool]
-
-  [tool.poetry]
-    authors = ["{{cookiecutter.author}} <{{cookiecutter.email}}>"]
-    description = "{{cookiecutter.description}}"
-    name = "{{cookiecutter.profile_slug}}"
-    version = "0.1.0"
-
-    [tool.poetry.dependencies]
-      python = ">=3.8.0,<4.0"
-
-    [tool.poetry.dev-dependencies]
-      ansible = "^4.0.0"
-      ansible-lint = "^5.0.8"
-      commitizen = "^2.17.6"
-      yamllint = "^1.26.1"
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=1.0.0"]
