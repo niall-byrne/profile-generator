@@ -20,8 +20,47 @@ env:
 
 jobs:
 
-  create_release:
+  apply_profile:
     needs: [push_repository_test]
+
+    runs-on: macos-${{ matrix.os }}
+    strategy:
+      max-parallel: 4
+      matrix:
+        os: [10.15]
+        platform: [x86_64]
+        python-version: [3.8.10]
+
+    steps:
+      - name: OSX Build -- Checkout Repository
+        uses: actions/checkout@v2
+        with:
+          path: 'template'
+
+      - name: OSX Build -- Setup Environment
+        run: |
+          source ./template/.github/scripts/setup.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: OSX Build -- Apply Pushed Profile
+        run: |
+          source ./template/.github/scripts/apply.sh
+        env:
+          PLATFORM_VERSION: ${{ matrix.platform }}
+          OS_VERSION: ${{ matrix.os }}
+
+      - name: OSX Build -- Report Job Status (Success)
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: OSX ${{ matrix.os }}, profile install was successful"
+
+      - name: OSX Build -- Report Job Status (Failure)
+        if: failure()
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: OSX ${{ matrix.os }}, profile install failed!"
+
+  create_release:
+    needs: [apply_profile]
 
     runs-on: ubuntu-latest
 

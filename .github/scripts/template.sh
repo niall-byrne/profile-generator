@@ -1,9 +1,9 @@
 #!/bin/bash
 
+set -eo pipefail
+
 NAME=${1:-"Pro Buddy Dev"}
 EMAIL=${2:-"somedude@coolstartup.com"}
-
-set -eo pipefail
 
 main() {
   pip install cookiecutter poetry
