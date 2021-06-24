@@ -20,7 +20,7 @@ env:
 
 jobs:
 
-  apply_profile:
+  apply_profile_test:
     needs: [push_repository_test]
 
     runs-on: macos-${{ matrix.os }}
@@ -60,7 +60,7 @@ jobs:
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: OSX ${{ matrix.os }}, profile install failed!"
 
   create_release:
-    needs: [apply_profile]
+    needs: [apply_profile_test]
 
     runs-on: ubuntu-latest
 

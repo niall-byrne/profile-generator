@@ -12,7 +12,7 @@
 
 ### 1. First make sure you're using Python 3.6.1 or later.
 - `pip install cookiecutter poetry`
-- `cookiecutter https://github.com/osx-provisioner/mac_maker.git --checkout v0.2.0`
+- `cookiecutter https://github.com/osx-provisioner/mac_maker.git --checkout v0.2.1`
 
 Warning: [Ansible is moving towards Python 3.8 soon](https://github.com/ansible/ansible/issues/72668).
 
