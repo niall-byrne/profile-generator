@@ -14,7 +14,7 @@ Use [Mac Maker](https://github.com/osx-provisioner/mac_maker) to apply this prof
 
 ## About The Default Configuration
 
-The template has generated you a development environment for a [Mac Maker](https://github.com/osx-provisioner/mac_maker.git) machine profile, with functional CI/CD.
+The template has generated you a development environment for a [Mac Maker](https://github.com/osx-provisioner/mac_maker.git) machine profile, with [functional CI](./.github/workflows/push.yml).
 
 The default configuration has some excellent functionality out of the box:
 - Installs the [Homebrew](https://brew.sh/) and [Xcode](https://developer.apple.com/xcode/) cli tools automatically.
