@@ -17,6 +17,7 @@ env:
   PROJECT_NAME: "profile-generator"
   TEMPLATED_NAME: "profile-example"
   USERNAME: "osx-provisioner"
+  VERBOSE_NOTIFICATIONS: 0
 
 jobs:
 
@@ -51,6 +52,7 @@ jobs:
           OS_VERSION: ${{ matrix.os }}
 
       - name: OSX Build -- Report Job Status (Success)
+        if: ${{ env.VERBOSE_NOTIFICATIONS  == '1' }}
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: OSX ${{ matrix.os }}, profile install was successful"
 
@@ -156,6 +158,7 @@ jobs:
           max-depth: -1
 
       - name: Documentation Test -- Report Job Status on Success
+        if: ${{ env.VERBOSE_NOTIFICATIONS  == '1' }}
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: documentation checks succeeded!"
 
@@ -198,6 +201,7 @@ jobs:
           poetry run ansible-lint install.yml --exclude ${HOME}/.ansible/roles/
 
       - name: Ansible Lint -- Report Job Status on Success
+        if: ${{ env.VERBOSE_NOTIFICATIONS  == '1' }}
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: ansible linting checks succeeded!"
 
@@ -273,6 +277,7 @@ jobs:
           force: true
 
       - name: Push Test -- Report Job Status on Success
+        if: ${{ env.VERBOSE_NOTIFICATIONS  == '1' }}
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: push has been triggered!"
 
@@ -310,6 +315,7 @@ jobs:
         uses: zricethezav/gitleaks-action@v1.6.0
 
       - name: Security Test -- Report Job Status on Success
+        if: ${{ env.VERBOSE_NOTIFICATIONS  == '1' }}
         run: |
           ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: repo security checks succeeded!"
 
@@ -354,6 +360,7 @@ jobs:
           cd ..
 
       - name: Security Test -- Report Job Status on Success
+        if: ${{ env.VERBOSE_NOTIFICATIONS  == '1' }}
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: template security checks succeeded!"
 
@@ -397,6 +404,7 @@ jobs:
           shellcheck ${TEMPLATED_NAME}/.github/scripts/*.sh
 
       - name: Shellcheck -- Report Job Status on Success
+        if: ${{ env.VERBOSE_NOTIFICATIONS  == '1' }}
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: shellcheck checks succeeded!"
 
@@ -404,6 +412,53 @@ jobs:
         if: failure()
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: shellcheck checks failed!"
+
+  start_notification:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Start -- Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Start -- Setup Environment
+        run: |
+          source ./.github/scripts/setup.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Start -- Report Job Status on Success
+        run: |
+          ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: workflow has started!"
+
+      - name: Start -- Report Job Status on Failure
+        if: failure()
+        run: |
+          ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: error reporting job status!"
+
+  success_notification:
+    needs: [ create_release ]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Success -- Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Success -- Setup Environment
+        run: |
+          source ./.github/scripts/setup.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Success -- Report Job Status on Success
+        run: |
+          ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: all checks were successful!"
+
+      - name: Success -- Report Job Status on Failure
+        if: failure()
+        run: |
+          ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: error reporting job status!"
 
   workflow_lint_test:
 
@@ -442,6 +497,7 @@ jobs:
           config_file: ./${{ env.TEMPLATED_NAME }}/profile/.yamllint.yml
 
       - name: Workflow Lint -- Report Job Status on Success
+        if: ${{ env.VERBOSE_NOTIFICATIONS  == '1' }}
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: workflow linting checks succeeded!"
 
