@@ -40,7 +40,7 @@ jobs:
 
       - name: OSX Build -- Setup Environment
         run: |
-          source ./template/.github/scripts/setup.sh
+          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
@@ -75,7 +75,7 @@ jobs:
       - name: Create Release -- Setup Environment
         if: contains(github.ref, '/tags/v')
         run: |
-          source .github/scripts/setup.sh
+          source ./{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
           echo "{}" > package.json
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
@@ -136,7 +136,7 @@ jobs:
 
       - name: Documentation Test -- Setup Environment / Render Template
         run: |
-          source ./template/.github/scripts/setup.sh
+          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
           source ./template/.github/scripts/template.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
@@ -189,7 +189,7 @@ jobs:
 
       - name: Ansible Lint -- Setup Environment / Render Template
         run: |
-          source ./template/.github/scripts/setup.sh
+          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
           source ./template/.github/scripts/template.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
@@ -234,7 +234,7 @@ jobs:
 
       - name: Push Test -- Setup Environment / Render Template
         run: |
-          source ./template/.github/scripts/setup.sh
+          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
           source ./template/.github/scripts/template.sh "GitHub Action" "action@github.com"
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
@@ -295,31 +295,31 @@ jobs:
         python-version: [3.8]
 
     steps:
-      - name: Security Test -- Checkout Repository
+      - name: Security Test Repo -- Checkout Repository
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - name: Security Test -- Set up Python ${{ matrix.python-version }}
+      - name: Security Test Repo -- Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Security Test -- Setup Environment
+      - name: Security Test Repo -- Setup Environment
         run: |
-          source ./.github/scripts/setup.sh
+          source ./{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Security Test -- Run Gitleaks
+      - name: Security Test Repo -- Run Gitleaks
         uses: zricethezav/gitleaks-action@v1.6.0
 
-      - name: Security Test -- Report Job Status on Success
+      - name: Security Test Repo -- Report Job Status on Success
         if: ${{ env.VERBOSE_NOTIFICATIONS  == '1' }}
         run: |
           ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: repo security checks succeeded!"
 
-      - name: Security Test -- Report Job Status on Failure
+      - name: Security Test Repo -- Report Job Status on Failure
         if: failure()
         run: |
           ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: repo security checks failed!"
@@ -333,25 +333,25 @@ jobs:
         python-version: [3.8]
 
     steps:
-      - name: Security Test -- Checkout Repository
+      - name: Security Test Template -- Checkout Repository
         uses: actions/checkout@v2
         with:
           path: 'template'
           fetch-depth: 1
 
-      - name: Security Test -- Set up Python ${{ matrix.python-version }}
+      - name: Security Test Template -- Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Security Test -- Setup Environment / Render Template
+      - name: Security Test Template -- Setup Environment / Render Template
         run: |
-          source ./template/.github/scripts/setup.sh
+          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
           source ./template/.github/scripts/template.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Security Test -- Check Dependencies
+      - name: Security Test Template -- Check Dependencies
         run: |
           pip install --upgrade pip safety
           cd "${TEMPLATED_NAME}"
@@ -359,12 +359,12 @@ jobs:
             safety check
           cd ..
 
-      - name: Security Test -- Report Job Status on Success
+      - name: Security Test Template -- Report Job Status on Success
         if: ${{ env.VERBOSE_NOTIFICATIONS  == '1' }}
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: template security checks succeeded!"
 
-      - name: Security Test -- Report Job Status on Failure
+      - name: Security Test Template -- Report Job Status on Failure
         if: failure()
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: template security checks failed!"
@@ -390,7 +390,7 @@ jobs:
 
       - name: Shellcheck -- Setup Environment / Render Template
         run: |
-          source ./template/.github/scripts/setup.sh
+          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
           source ./template/.github/scripts/template.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
@@ -399,6 +399,7 @@ jobs:
         run: |
           shellcheck ./template/hooks/*.sh
           shellcheck ./template/.github/scripts/*.sh
+
       - name: Shellcheck -- Shellcheck Rendered Scripts
         run: |
           shellcheck ${TEMPLATED_NAME}/.github/scripts/*.sh
@@ -423,7 +424,7 @@ jobs:
 
       - name: Start -- Setup Environment
         run: |
-          source ./.github/scripts/setup.sh
+          source ./{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
@@ -437,7 +438,7 @@ jobs:
           ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: error reporting job status!"
 
   success_notification:
-    needs: [ create_release ]
+    needs: [create_release]
 
     runs-on: ubuntu-latest
 
@@ -447,7 +448,7 @@ jobs:
 
       - name: Success -- Setup Environment
         run: |
-          source ./.github/scripts/setup.sh
+          source ./{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
@@ -477,7 +478,7 @@ jobs:
 
       - name: Workflow Lint -- Setup Environment / Render Template
         run: |
-          source ./template/.github/scripts/setup.sh
+          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
           source ./template/.github/scripts/template.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
