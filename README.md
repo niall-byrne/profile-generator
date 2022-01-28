@@ -12,7 +12,7 @@
 
 ### 1. First make sure you're using Python 3.8 or later.
 - `pip install cookiecutter poetry`
-- `cookiecutter https://github.com/osx-provisioner/mac_maker.git --checkout v0.2.2`
+- `cookiecutter https://github.com/osx-provisioner/mac_maker.git --checkout v0.2.3`
 
 ### 2. Give your project a name, and populate the other required template inputs.
 - [Cookiecutter](https://cookiecutter.readthedocs.io/) will prompt you to enter some information such as the Profile's name, and your GitHub user handle. 
