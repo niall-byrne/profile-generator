@@ -88,10 +88,8 @@ jobs:
 
       - name: Release -- Generate Changelog
         if: contains(github.ref, '/tags/v')
-        uses: {% endraw %}{{ cookiecutter._GITHUB_GENERATE_CHANGELOG_ACTION }}{% raw %}
-        id: Changelog
-        env:
-          REPO: ${{ github.repository }}
+        run:
+          source ./.github/scripts/changelog.sh
 
       - name: Release -- Create GitHub Release
         if: contains(github.ref, '/tags/v')
@@ -102,7 +100,7 @@ jobs:
           tag_name: ${{ env.NEWTAG }}
           release_name: Release ${{ env.NEWTAG }}
           body: |
-            ${{ steps.Changelog.outputs.changelog }}
+            ${{ env.CHANGE_LOG_CONTENT }}
           draft: true
           prerelease: false
 
