@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# .github/scripts/template.sh
+# Perform automated templating.
+
+# 1: Git Username
+# 2: Git Email
+
+# CI only script.
+
 set -eo pipefail
 
 NAME=${1:-"Pro Buddy Dev"}

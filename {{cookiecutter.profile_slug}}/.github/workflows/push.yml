@@ -18,6 +18,53 @@ env:
 {% raw %}
 jobs:
 
+  _start_notification:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Start -- Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Start -- Setup Environment
+        run: |
+          source ./.github/scripts/setup.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Start -- Report Job Status on Success
+        run: |
+          ./.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: workflow has started!"
+
+      - name: Start -- Report Job Status on Failure
+        if: failure()
+        run: |
+          ./.github/scripts/notifications.sh "${NOTIFICATION}" ":x: error reporting job status!"
+
+  _success_notification:
+    needs: [create_release]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Success -- Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Success -- Setup Environment
+        run: |
+          source ./.github/scripts/setup.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Success -- Report Job Status on Success
+        run: |
+          ./.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: all checks were successful!"
+
+      - name: Success -- Report Job Status on Failure
+        if: failure()
+        run: |
+          ./.github/scripts/notifications.sh "${NOTIFICATION}" ":x: error reporting job status!"
+
   ansible_lint:
 
     runs-on: ubuntu-latest
@@ -29,11 +76,11 @@ jobs:
     steps:
 
       - name: Ansible Lint -- Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
 
       - name: Ansible Lint -- Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -55,7 +102,7 @@ jobs:
           poetry run ansible-lint install.yml --exclude ${HOME}/.ansible/roles/
 
       - name: Ansible Lint -- Report Job Status (Success)
-        if: ${{ env.VERBOSE_NOTIFICATIONS  == '1' }}
+        if: env.VERBOSE_NOTIFICATIONS  == '1'
         run: |
           ./.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: ansible lint checks were successful!"
 
@@ -65,52 +112,66 @@ jobs:
           ./.github/scripts/notifications.sh "${NOTIFICATION}" ":x: ansible lint checks failed!"
 
   create_release:
-    needs: [ansible_lint, documentation_test, security_test, start_notification, workflow_lint_test]
+    needs: [_start_notification, ansible_lint, documentation_test, security_test, workflow_lint_test]
 
     runs-on: ubuntu-latest
 
     steps:
-      - name: Release -- Checkout Repository
-        if: contains(github.ref, '/tags/v')
-        uses: actions/checkout@v2
+      - name: Create Release -- Branch Filter
+        id: branch_filter
+        run: |
+          MATCH="FALSE"
+          [[ "${{ github.event.ref }}" =~ /tags/v\.* ]] && MATCH="TRUE"
+          echo "MATCH=${MATCH}" >> $GITHUB_OUTPUT
+
+      - name: Create Release -- Checkout Repository
+        if: steps.branch_filter.outputs.match == 'TRUE'
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Release -- Setup Environment
-        if: contains(github.ref, '/tags/v')
+      - name: Create Release -- Setup Environment
+        if: steps.branch_filter.outputs.match == 'TRUE'
         run: |
           source ./.github/scripts/setup.sh
-          NEWTAG=${BRANCH_OR_TAG}
-          echo "NEWTAG=${NEWTAG}" >> $GITHUB_ENV
           echo "{}" > package.json
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Release -- Generate Changelog
-        if: contains(github.ref, '/tags/v')
+      - name: Create Release -- Generate Changelog
+        if: steps.branch_filter.outputs.match == 'TRUE'
         run:
           source ./.github/scripts/changelog.sh
 
-      - name: Release -- Create GitHub Release
-        if: contains(github.ref, '/tags/v')
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Release -- Generate Github Release Draft
+        if: steps.branch_filter.outputs.match == 'TRUE'
+        id: create_release
+        uses: actions/github-script@v6
         with:
-          tag_name: ${{ env.NEWTAG }}
-          release_name: Release ${{ env.NEWTAG }}
-          body: |
-            ${{ env.CHANGE_LOG_CONTENT }}
-          draft: true
-          prerelease: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            try {
+              const result = await github.rest.repos.createRelease({
+                body: process.env.CHANGE_LOG_CONTENT,
+                draft: true,
+                name: "Release " + process.env.BRANCH_OR_TAG,
+                owner: context.repo.owner,
+                prerelease: false,
+                repo: context.repo.repo,
+                tag_name: process.env.BRANCH_OR_TAG,
+              });
+              return result
+            } catch (error) {
+              core.setFailed(error.message);
+            }
 
-      - name: Release -- Report Job Status (Success)
-        if: contains(github.ref, '/tags/v')
+      - name: Create Release -- Report Job Status (Success)
+        if: steps.branch_filter.outputs.match == 'TRUE'
         run: |
           ./.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: automated release has been created:\nhttps://github.com/${USERNAME}/${PROJECT_NAME}/releases"
 
-      - name: Release -- Report Job Status (Failure)
-        if: failure() && contains(github.ref, '/tags/v')
+      - name: Create Release -- Report Job Status (Failure)
+        if: failure()
         run: |
           ./.github/scripts/notifications.sh "${NOTIFICATION}" ":x: automated release generation failed!"
 
@@ -120,7 +181,7 @@ jobs:
 
     steps:
       - name: Documentation Test -- Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Documentation Test -- Setup Environment
         run: |
@@ -135,7 +196,7 @@ jobs:
           use-verbose-mode: 'yes'
 
       - name: Documentation Test -- Report Success
-        if: ${{ env.VERBOSE_NOTIFICATIONS  == '1' }}
+        if: env.VERBOSE_NOTIFICATIONS  == '1'
         run: |
           ./.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: documentation test was successful!"
 
@@ -143,53 +204,6 @@ jobs:
         if: failure()
         run: |
           ./.github/scripts/notifications.sh "${NOTIFICATION}" ":x: documentation test has failed!"
-
-  start_notification:
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Start -- Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: Start -- Setup Environment
-        run: |
-          source ./.github/scripts/setup.sh
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-
-      - name: Start -- Report Job Status on Success
-        run: |
-          ./.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: workflow has started!"
-
-      - name: Start -- Report Job Status on Failure
-        if: failure()
-        run: |
-          ./.github/scripts/notifications.sh "${NOTIFICATION}" ":x: error reporting job status!"
-
-  success_notification:
-    needs: [create_release]
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Success -- Checkout Repository
-        uses: actions/checkout@v2
-
-      - name: Success -- Setup Environment
-        run: |
-          source ./.github/scripts/setup.sh
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-
-      - name: Success -- Report Job Status on Success
-        run: |
-          ./.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: all checks were successful!"
-
-      - name: Success -- Report Job Status on Failure
-        if: failure()
-        run: |
-          ./.github/scripts/notifications.sh "${NOTIFICATION}" ":x: error reporting job status!"
 
   security_test:
 
@@ -201,23 +215,29 @@ jobs:
 
     steps:
       - name: Security Test -- Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       - name: Security Test -- Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Security Test -- Setup Environment
         run: |
           source ./.github/scripts/setup.sh
+          source ./.github/scripts/pushed_commit_range.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+          GITHUB_CONTEXT: ${{ toJson(github) }}
 
-      - name: Security Test -- Run Gitleaks
-        uses: {% endraw %}{{ cookiecutter._GITHUB_GITLEAKS_ACTION }}{% raw %}
+      - name: Security Test -- Run Trufflehog
+        uses: {% endraw %}{{ cookiecutter._GITHUB_TRUFFLEHOG_ACTION }}{% raw %}
+        with:
+          path: .
+          base: ${{ env.PUSHED_COMMIT_RANGE }}
+          head: ${{ env.BRANCH_OR_TAG }}
 
       - name: Security Test -- Check Dependencies
         run: |
@@ -227,7 +247,7 @@ jobs:
           poetry export -f requirements.txt --without-hashes | safety check --stdin
 
       - name: Security Test -- Report Job Status on Success
-        if: ${{ env.VERBOSE_NOTIFICATIONS  == '1' }}
+        if: env.VERBOSE_NOTIFICATIONS  == '1'
         run: |
           ./.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: security checks were successful!"
 
@@ -242,7 +262,7 @@ jobs:
 
     steps:
       - name: Workflow Lint -- Checkout Repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Workflow Lint -- Setup Environment
         run: |
@@ -258,7 +278,7 @@ jobs:
           config_file: ./profile/.yamllint.yml
 
       - name: Workflow Lint -- Report Job Status (Success)
-        if: ${{ env.VERBOSE_NOTIFICATIONS  == '1' }}
+        if: env.VERBOSE_NOTIFICATIONS  == '1'
         run: |
           ./.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: workflow linting was successful!"
 

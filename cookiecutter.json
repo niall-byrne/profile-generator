@@ -10,8 +10,8 @@
         "profile/tasks/post_install/*.yml",
         "profile/handlers/*.yml"
     ],
-    "_GITHUB_ACTION_MARKDOWN_LINK_CHECK": "gaurav-nelson/github-action-markdown-link-check@1.0.12",
-    "_GITHUB_GITLEAKS_ACTION": "zricethezav/gitleaks-action@v1.6.0",
+    "_GITHUB_ACTION_MARKDOWN_LINK_CHECK": "gaurav-nelson/github-action-markdown-link-check@1.0.14",
+    "_GITHUB_TRUFFLEHOG_ACTION": "trufflesecurity/trufflehog@v3.20.0",
     "_GITHUB_YAMLLINT_ACTION": "ibiqlik/action-yamllint@v3"
 }
 
