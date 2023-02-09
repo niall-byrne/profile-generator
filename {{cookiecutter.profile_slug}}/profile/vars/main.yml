@@ -6,7 +6,7 @@ brew_taps: []
 
 # Add Homebrew Packages You Wish To Use Here
 brew_packages:
-  - awscli
+  - bash
 
 # Add Homebrew Casks You Wish To Use Here
 brew_casks:
