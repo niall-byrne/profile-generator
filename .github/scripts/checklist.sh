@@ -26,4 +26,4 @@ main() {
 
 }
 
-main
+main "$@"

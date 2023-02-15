@@ -13,7 +13,7 @@ initialize_git() {
 }
 
 initialize_poetry() {
-  if [[ -z "$(poetry env list)" ]]; then
+  if [[ -z "${PROFILE_GENERATOR_SKIP_INSTALL}" ]]; then
     poetry install
   fi
 }

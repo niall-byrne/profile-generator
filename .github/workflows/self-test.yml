@@ -13,12 +13,13 @@ on:
   workflow_dispatch:
 
 env:
-  RELEASE_VERSION:  "v0.0.5"
+  MAC_MAKER_VERSION:  "0.0.6"
   PROJECT_NAME: "profile-generator"
+  PYTHON_KEYRING_BACKEND: "keyring.backends.fail.Keyring"
+  PYTHON_VERSION: "3.9"
   TEMPLATED_NAME: "profile-example"
   USERNAME: "osx-provisioner"
   VERBOSE_NOTIFICATIONS: 0
-  PYTHON_KEYRING_BACKEND: "keyring.backends.fail.Keyring"
 
 jobs:
 
@@ -69,6 +70,73 @@ jobs:
         run: |
           ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: error reporting job status!"
 
+  ansible_lint_test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Ansible Lint -- Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          path: 'template'
+
+      - name: Ansible Lint -- Setup Environment
+        run: |
+          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Ansible Lint -- Install Template Requirements
+        run: |
+          source ./template/.github/scripts/requirements.sh
+
+      - name: Ansible Lint -- Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Ansible Lint -- Initialize Cache Locations
+        run: |
+          mkdir -p ~/.cache/pypoetry/virtualenvs
+          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/ansible_cache.sh  \
+            "$(pwd)/ansible_cache"                                                          \
+            ~/.ansible
+
+      - name: Ansible Lint -- Mount Ansible Cache
+        uses: actions/cache@v3
+        with:
+          key: ansible-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/profile/requirements.yml') }}-${{ env.CACHE_TTL }}
+          path: ansible_cache
+
+      - name: Ansible Lint -- Mount Poetry Cache
+        uses: actions/cache@v3
+        with:
+          key: poetry-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/pyproject.toml') }}-${{ runner.os }}-${{ env.CACHE_TTL }}
+          path: ~/.cache/pypoetry/virtualenvs/
+
+      - name: Ansible Lint -- Render Template
+        run: |
+          source ./template/.github/scripts/template.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Ansible Lint -- Lint Rendered Template
+        run: |
+          cd "${TEMPLATED_NAME}/profile"
+          poetry run ansible-galaxy install --timeout 120 -r requirements.yml
+          poetry run ansible-lint install.yml --offline
+
+      - name: Ansible Lint -- Report Job Status on Success
+        if: env.VERBOSE_NOTIFICATIONS == '1'
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: ansible linting checks succeeded!"
+
+      - name: Ansible Lint -- Report Job Status on Failure
+        if: failure()
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: ansible linting checks failed!"
+
   apply_profile_test:
     needs: [push_repository_test]
 
@@ -76,38 +144,49 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        os: [11]
+        os: [12]
         platform: [x86_64]
-        python-version: [3.9.16]
 
     steps:
-      - name: OSX Build -- Checkout Repository
+      - name: Apply Profile -- Checkout Repository
         uses: actions/checkout@v3
         with:
           path: 'template'
 
-      - name: OSX Build -- Setup Environment
+      - name: Apply Profile -- Setup Environment
         run: |
           source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: OSX Build -- Apply Pushed Profile
+      - name: Apply Profile -- Initialize Cache Locations
+        run: |
+          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/ansible_cache.sh  \
+            "$(pwd)/ansible_cache"                                                          \
+            "$(pwd)/installer.workspace/${TEMPLATED_NAME}-master/profile"
+
+      - name: Apply Profile -- Mount Ansible Cache
+        uses: actions/cache@v3
+        with:
+          key: ansible-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/profile/requirements.yml') }}-${{ env.CACHE_TTL }}
+          path: ansible_cache
+
+      - name: Apply Profile -- Apply Pushed Profile
         run: |
           source ./template/.github/scripts/apply.sh
         env:
           PLATFORM_VERSION: ${{ matrix.platform }}
           OS_VERSION: ${{ matrix.os }}
 
-      - name: OSX Build -- Report Job Status (Success)
-        if: env.VERBOSE_NOTIFICATIONS  == '1'
+      - name: Apply Profile -- Report Job Status (Success)
+        if: env.VERBOSE_NOTIFICATIONS == '1'
         run: |
-          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: OSX ${{ matrix.os }}, profile install was successful"
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: OSX ${{ matrix.os }}, profile application was successful"
 
       - name: OSX Build -- Report Job Status (Failure)
         if: failure()
         run: |
-          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: OSX ${{ matrix.os }}, profile install failed!"
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: OSX ${{ matrix.os }}, profile application failed!"
 
   create_release:
     needs: [apply_profile_test]
@@ -131,7 +210,6 @@ jobs:
         if: steps.branch_filter.outputs.match == 'TRUE'
         run: |
           source ./{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
-          echo "{}" > package.json
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
@@ -180,10 +258,8 @@ jobs:
   documentation_test:
 
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.9]
+    env:
+      PROFILE_GENERATOR_SKIP_INSTALL: 1
 
     steps:
 
@@ -192,14 +268,23 @@ jobs:
         with:
           path: 'template'
 
-      - name: Documentation Test -- Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Documentation Test -- Setup Environment / Render Template
+      - name: Documentation Test -- Setup Environment
         run: |
           source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Documentation Test -- Install Template Requirements
+        run: |
+          source ./template/.github/scripts/requirements.sh
+
+      - name: Documentation Test -- Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Documentation Test -- Render Template
+        run: |
           source ./template/.github/scripts/template.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
@@ -222,7 +307,7 @@ jobs:
           max-depth: -1
 
       - name: Documentation Test -- Report Job Status on Success
-        if: env.VERBOSE_NOTIFICATIONS  == '1'
+        if: env.VERBOSE_NOTIFICATIONS == '1'
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: documentation checks succeeded!"
 
@@ -231,57 +316,10 @@ jobs:
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: documentation checks failed!"
 
-  ansible_lint_test:
-
-    runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.9]
-
-    steps:
-
-      - name: Ansible Lint -- Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          path: 'template'
-
-      - name: Ansible Lint -- Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Ansible Lint -- Setup Environment / Render Template
-        run: |
-          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
-          source ./template/.github/scripts/template.sh
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-
-      - name: Ansible Lint -- Lint Rendered Template
-        run: |
-          cd ${TEMPLATED_NAME}/profile
-          poetry run ansible-galaxy install -r requirements.yml
-          poetry run ansible-lint install.yml --exclude ${HOME}/.ansible/roles/
-
-      - name: Ansible Lint -- Report Job Status on Success
-        if: env.VERBOSE_NOTIFICATIONS  == '1'
-        run: |
-          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: ansible linting checks succeeded!"
-
-      - name: Ansible Lint -- Report Job Status on Failure
-        if: failure()
-        run: |
-          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: ansible linting checks failed!"
-
   push_repository_test:
-    needs: [_start_notification, documentation_test, ansible_lint_test, security_test_repo, security_test_template, shellcheck_test, workflow_lint_test]
+    needs: [_start_notification, documentation_test, ansible_lint_test, security_test_repo, shellcheck_test, toml_lint_test, workflow_lint_test]
 
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.9]
 
     steps:
 
@@ -291,21 +329,40 @@ jobs:
           path: 'template'
           persist-credentials: false
 
-      - name: Push Test -- Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Push Test -- Setup Environment / Render Template
+      - name: Push Test -- Setup Environment
         run: |
           source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Push Test -- Install Template Requirements
+        run: |
+          source ./template/.github/scripts/requirements.sh
+
+      - name: Push Test -- Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Push Test -- Initialize Cache Locations
+        run: |
+          mkdir -p ~/.cache/pypoetry/virtualenvs
+
+      - name: Push Test -- Mount Poetry Cache
+        uses: actions/cache@v3
+        with:
+          key: poetry-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/pyproject.toml') }}-${{ runner.os }}-${{ env.CACHE_TTL }}
+          path: ~/.cache/pypoetry/virtualenvs/
+
+      - name: Push Test -- Render Template
+        run: |
           source ./template/.github/scripts/template.sh "GitHub Action" "action@github.com"
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
       - name: Push Test -- Clean Up Tags for Git Push
         run: |
-          cd ${TEMPLATED_NAME}
+          cd "${TEMPLATED_NAME}"
           git checkout master
           git tag --delete v0.0.0  # Don't Repush
           git tag v0.1.0
@@ -341,33 +398,24 @@ jobs:
           force: true
 
       - name: Push Test -- Report Job Status on Success
-        if: env.VERBOSE_NOTIFICATIONS  == '1'
+        if: env.VERBOSE_NOTIFICATIONS == '1'
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: push has been triggered!"
 
       - name: Push Test -- Report Job Status on Failure
         if: failure()
         run: |
-          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: push failed to trigger!"
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICdATION}" ":x: push failed to trigger!"
 
   security_test_repo:
 
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.9]
 
     steps:
       - name: Security Test Repo -- Checkout Repository
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-      - name: Security Test Repo -- Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
 
       - name: Security Test Repo -- Setup Environment
         run: |
@@ -385,7 +433,7 @@ jobs:
           head: ${{ env.BRANCH_OR_TAG }}
 
       - name: Security Test Repo -- Report Job Status on Success
-        if: env.VERBOSE_NOTIFICATIONS  == '1'
+        if: env.VERBOSE_NOTIFICATIONS == '1'
         run: |
           ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: repo security checks succeeded!"
 
@@ -394,58 +442,11 @@ jobs:
         run: |
           ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: repo security checks failed!"
 
-  security_test_template:
-
-    runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.9]
-
-    steps:
-      - name: Security Test Template -- Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          path: 'template'
-          fetch-depth: 1
-
-      - name: Security Test Template -- Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Security Test Template -- Setup Environment / Render Template
-        run: |
-          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
-          source ./template/.github/scripts/template.sh
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-
-      - name: Security Test Template -- Check Dependencies
-        run: |
-          pip install --upgrade pip safety
-          cd "${TEMPLATED_NAME}"
-            poetry install
-            poetry export -f requirements.txt --without-hashes | safety check --stdin
-          cd ..
-
-      - name: Security Test Template -- Report Job Status on Success
-        if: env.VERBOSE_NOTIFICATIONS  == '1'
-        run: |
-          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: template security checks succeeded!"
-
-      - name: Security Test Template -- Report Job Status on Failure
-        if: failure()
-        run: |
-          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: template security checks failed!"
-
   shellcheck_test:
 
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.9]
+    env:
+      PROFILE_GENERATOR_SKIP_INSTALL: 1
 
     steps:
       - name: Shellcheck -- Checkout Repository
@@ -453,14 +454,23 @@ jobs:
         with:
           path: 'template'
 
-      - name: Shellcheck -- Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Shellcheck -- Setup Environment / Render Template
+      - name: Shellcheck -- Setup Environment
         run: |
           source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Shellcheck -- Install Template Requirements
+        run: |
+          source ./template/.github/scripts/requirements.sh
+
+      - name: Shellcheck -- Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Shellcheck -- Render Template
+        run: |
           source ./template/.github/scripts/template.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
@@ -472,10 +482,10 @@ jobs:
 
       - name: Shellcheck -- Shellcheck Rendered Scripts
         run: |
-          shellcheck ${TEMPLATED_NAME}/.github/scripts/*.sh
+          shellcheck "${TEMPLATED_NAME}"/.github/scripts/*.sh
 
       - name: Shellcheck -- Report Job Status on Success
-        if: env.VERBOSE_NOTIFICATIONS  == '1'
+        if: env.VERBOSE_NOTIFICATIONS == '1'
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: shellcheck checks succeeded!"
 
@@ -484,13 +494,61 @@ jobs:
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: shellcheck checks failed!"
 
+  toml_lint_test:
+
+    runs-on: ubuntu-latest
+    env:
+      PROFILE_GENERATOR_SKIP_INSTALL: 1
+
+    steps:
+      - name: Toml Lint -- Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          path: 'template'
+
+      - name: Toml Lint -- Setup Environment
+        run: |
+          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+          sudo apt-get install -y golang-github-pelletier-go-toml
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Toml Lint -- Install Template Requirements
+        run: |
+          source ./template/.github/scripts/requirements.sh
+
+      - name: Toml Lint -- Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Toml Lint -- Render Template
+        run: |
+          source ./template/.github/scripts/template.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Toml Lint -- Run Linter
+        run: |
+          cd "${TEMPLATED_NAME}"
+          tomll pyproject.toml
+          git diff --exit-code
+
+      - name: Toml Lint -- Report Job Status (Success)
+        if: env.VERBOSE_NOTIFICATIONS == '1'
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: toml linting was successful!"
+
+      - name: Toml Lint -- Report Job Status (Failure)
+        if: failure()
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: toml linting has failed!"
+
   workflow_lint_test:
 
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 4
-      matrix:
-        python-version: [3.9]
+    env:
+      PROFILE_GENERATOR_SKIP_INSTALL: 1
 
     steps:
       - name: Workflow Lint -- Checkout Repository
@@ -498,14 +556,23 @@ jobs:
         with:
           path: 'template'
 
-      - name: Workflow Lint -- Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Workflow Lint -- Setup Environment / Render Template
+      - name: Workflow Lint -- Setup Environment
         run: |
           source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Workflow Lint -- Install Template Requirements
+        run: |
+          source ./template/.github/scripts/requirements.sh
+
+      - name: Workflow Lint -- Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Workflow Lint -- Render Template
+        run: |
           source ./template/.github/scripts/template.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
@@ -525,7 +592,7 @@ jobs:
           config_file: ./${{ env.TEMPLATED_NAME }}/profile/.yamllint.yml
 
       - name: Workflow Lint -- Report Job Status on Success
-        if: env.VERBOSE_NOTIFICATIONS  == '1'
+        if: env.VERBOSE_NOTIFICATIONS == '1'
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: workflow linting checks succeeded!"
 

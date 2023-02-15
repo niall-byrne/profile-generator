@@ -25,4 +25,4 @@ main() {
 
 }
 
-main
+main "$@"
