@@ -71,7 +71,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.8]
+        python-version: [{% endraw %}{{ cookiecutter._GITHUB_CI_PYTHON_VERSION }}{% raw %}]
 
     steps:
 
@@ -211,7 +211,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.8]
+        python-version: [{% endraw %}{{ cookiecutter._GITHUB_CI_PYTHON_VERSION }}{% raw %}]
 
     steps:
       - name: Security Test -- Checkout Repository

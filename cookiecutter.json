@@ -10,6 +10,7 @@
         "profile/tasks/post_install/*.yml",
         "profile/handlers/*.yml"
     ],
+    "_GITHUB_CI_PYTHON_VERSION": "3.9",
     "_GITHUB_ACTION_MARKDOWN_LINK_CHECK": "gaurav-nelson/github-action-markdown-link-check@1.0.14",
     "_GITHUB_TRUFFLEHOG_ACTION": "trufflesecurity/trufflehog@v3.20.0",
     "_GITHUB_YAMLLINT_ACTION": "ibiqlik/action-yamllint@v3"
