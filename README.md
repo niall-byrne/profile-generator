@@ -61,13 +61,13 @@ Poetry is leveraged to manage the Python dependencies:
 - [Removing Python Packages With Poetry](https://python-poetry.org/docs/cli/#remove)
 
 ## Default Installed Python Packages:
-| package      | Description                                  |
-| ------------ | -------------------------------------------- |
-| ansible      | Simple, agentless IT automation              |
-| ansible-lint | Checks playbooks for practices and behaviour |
-| commitizen   | Standardizes commit messages                 |
-| poetry       | Python package manager                       |
-| yamllint     | Lints yaml configuration files               |
+| package      | Description                                        |
+| ------------ | -------------------------------------------------- |
+| ansible      | Simple, agentless IT automation.                   |
+| ansible-lint | Checks playbooks for best practices and behaviour. |
+| commitizen   | Standardizes git commit messages.                  |
+| poetry       | Python package and dependency manager.             |
+| yamllint     | Lints yaml files.                                  |
 
 ## Third Party Integrations
 
