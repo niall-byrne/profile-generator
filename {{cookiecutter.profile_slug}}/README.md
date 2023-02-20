@@ -1,10 +1,10 @@
 # {{cookiecutter.profile_slug}}
 
-### Master:
-- [![{{cookiecutter.profile_slug}}](https://github.com/{{cookiecutter.github_handle}}/{{cookiecutter.profile_slug}}/actions/workflows/push.yml/badge.svg?branch=master)](https://github.com/{{cookiecutter.github_handle}}/{{cookiecutter.profile_slug}}/actions/workflows/push.yml)
+### {{ cookiecutter._BRANCH_NAME_BASE | capitalize }} Branch CI:
+- [![{{cookiecutter.profile_slug}}](https://github.com/{{cookiecutter.github_handle}}/{{cookiecutter.profile_slug}}/actions/workflows/push.yml/badge.svg?branch={{ cookiecutter._BRANCH_NAME_BASE }})](https://github.com/{{cookiecutter.github_handle}}/{{cookiecutter.profile_slug}}/actions/workflows/push.yml)
 
-### Production:
-- [![{{cookiecutter.profile_slug}}](https://github.com/{{cookiecutter.github_handle}}/{{cookiecutter.profile_slug}}/actions/workflows/push.yml/badge.svg?branch=production)](https://github.com/{{cookiecutter.github_handle}}/{{cookiecutter.profile_slug}}/actions/workflows/push.yml)
+### {{ cookiecutter._BRANCH_NAME_DEVELOPMENT | capitalize }} Branch CI:
+- [![{{cookiecutter.profile_slug}}](https://github.com/{{cookiecutter.github_handle}}/{{cookiecutter.profile_slug}}/actions/workflows/push.yml/badge.svg?branch={{ cookiecutter._BRANCH_NAME_DEVELOPMENT }})](https://github.com/{{cookiecutter.github_handle}}/{{cookiecutter.profile_slug}}/actions/workflows/push.yml)
 
 ## Mac Maker Profile
 

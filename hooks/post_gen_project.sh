@@ -1,14 +1,18 @@
 #!/bin/bash
 
+set -eo pipefail
+
+PROFILE_GENERATOR_BRANCH_NAME_BASE=${PROFILE_GENERATOR_BRANCH_NAME_BASE-"{{ cookiecutter._BRANCH_NAME_BASE }}"}
+PROFILE_GENERATOR_BRANCH_NAME_DEVELOPMENT=${PROFILE_GENERATOR_BRANCH_NAME_DEVELOPMENT-"{{ cookiecutter._BRANCH_NAME_DEVELOPMENT }}"}
+
 initialize_git() {
   git init
-  git checkout -b master
+  git checkout -b "${PROFILE_GENERATOR_BRANCH_NAME_BASE}"
   git stage .
   git commit -m "build(COOKIECUTTER): initial generation"
-  git symbolic-ref HEAD refs/heads/master
+  git symbolic-ref HEAD "refs/heads/${PROFILE_GENERATOR_BRANCH_NAME_BASE}"
   git tag 0.0.0
-  git checkout -b production
-  git checkout master
+  git checkout -b "${PROFILE_GENERATOR_BRANCH_NAME_DEVELOPMENT}"
   mkdir -p files templates
 }
 
@@ -27,7 +31,7 @@ initialize_precommit() {
 
 update_template_values() {
   # Compatible with Linux and BSD sed
-  sed -i.bak 's/ansible-workbench\//https:\/\/github.com\/Shared-Vision-Solutions\/ansible-workbench.git/' .cookiecutter/cookiecutter.json
+  sed -i.bak 's/profile-generator\//https:\/\/github.com\/osx-provisioner\/profile-generator.git/' .cookiecutter/cookiecutter.json
   rm .cookiecutter/cookiecutter.json.bak
 }
 

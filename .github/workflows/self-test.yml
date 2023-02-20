@@ -15,6 +15,8 @@ on:
 env:
   MAC_MAKER_VERSION:  "0.0.6"
   PROJECT_NAME: "profile-generator"
+  PROFILE_GENERATOR_BRANCH_NAME_BASE: "master"
+  PROFILE_GENERATOR_BRANCH_NAME_DEVELOPMENT: "dev"
   PYTHON_KEYRING_BACKEND: "keyring.backends.fail.Keyring"
   PYTHON_VERSION: "3.9"
   TEMPLATED_NAME: "profile-example"
@@ -166,7 +168,7 @@ jobs:
         run: |
           source ./template/{{cookiecutter.profile_slug}}/.github/scripts/ansible_cache.sh  \
             "$(pwd)/ansible_cache"                                                          \
-            "$(pwd)/installer.workspace/${TEMPLATED_NAME}-master/profile"
+            "$(pwd)/installer.workspace/${TEMPLATED_NAME}-${PROFILE_GENERATOR_BRANCH_NAME_BASE}/profile"
 
       - name: Apply Profile -- Mount Ansible Cache
         uses: actions/cache@v3
@@ -473,21 +475,21 @@ jobs:
           git commit -m 'feat(TEST_FILE): add test file'
           git tag "${TEST_PUSH_TAG}"
 
-      - name: Push Test -- Push To Test Repository (master) (${{ env.TEMPLATED_NAME_1 }})
+      - name: Push Test -- Push To Test Repository (${{ env.PROFILE_GENERATOR_BRANCH_NAME_BASE }}) (${{ env.TEMPLATED_NAME_1 }})
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.REMOTE_TOKEN }}
-          branch: master
+          branch: ${{ env.PROFILE_GENERATOR_BRANCH_NAME_BASE }}
           tags: false
           directory: ${{ env.TEMPLATED_NAME_1 }}
           repository: ${{ secrets.REMOTE_ORIGIN }}
           force: true
 
-      - name: Push Test -- Push To Test Repository (production) (${{ env.TEMPLATED_NAME_2 }})
+      - name: Push Test -- Push To Test Repository (${{ env.PROFILE_GENERATOR_BRANCH_NAME_DEVELOPMENT }}) (${{ env.TEMPLATED_NAME_2 }})
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.REMOTE_TOKEN }}
-          branch: production
+          branch: ${{ env.PROFILE_GENERATOR_BRANCH_NAME_DEVELOPMENT }}
           tags: false
           directory: ${{ env.TEMPLATED_NAME_2 }}
           repository: ${{ secrets.REMOTE_ORIGIN }}
@@ -497,7 +499,7 @@ jobs:
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.REMOTE_TOKEN }}
-          branch: production
+          branch: ${{ env.PROFILE_GENERATOR_BRANCH_NAME_BASE }}
           tags: true
           directory: ${{ env.TEMPLATED_NAME_1 }}
           repository: ${{ secrets.REMOTE_ORIGIN }}
