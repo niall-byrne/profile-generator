@@ -5,6 +5,10 @@
 
 # Development only script.
 
+set -eo pipefail
+
+OPTIONAL_TOML_LINTING=1
+
 main() {
 
   rm -rf ../profile-example
@@ -12,7 +16,7 @@ main() {
   pushd .. || exit 127
 
     set -eo pipefail
-      echo -e '\n\n\n\n\n\n' | cookiecutter profile-generator
+      echo -e "\n\n${OPTIONAL_TOML_LINTING}\n\n\n\n\n" | cookiecutter profile-generator
       cd profile-example || exit 127
     set +eo pipefail
     echo -e "\nExit from this shell when finished testing ..."

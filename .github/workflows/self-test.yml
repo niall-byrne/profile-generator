@@ -18,7 +18,7 @@ env:
   PYTHON_KEYRING_BACKEND: "keyring.backends.fail.Keyring"
   PYTHON_VERSION: "3.9"
   TEMPLATED_NAME: "profile-example"
-  USERNAME: "osx-provisioner"
+  USER_NAME: "osx-provisioner"
   VERBOSE_NOTIFICATIONS: 0
 
 jobs:
@@ -73,6 +73,10 @@ jobs:
   ansible_lint_test:
 
     runs-on: ubuntu-latest
+    env:
+      PROFILE_GENERATOR_SKIP_POETRY: 0
+      PROFILE_GENERATOR_SKIP_PRECOMMIT: 0
+      SELECTION_TOML: 1
 
     steps:
 
@@ -124,8 +128,7 @@ jobs:
       - name: Ansible Lint -- Lint Rendered Template
         run: |
           cd "${TEMPLATED_NAME}/profile"
-          poetry run ansible-galaxy install --timeout 120 -r requirements.yml
-          poetry run ansible-lint install.yml --offline
+          poetry run ansible-lint
 
       - name: Ansible Lint -- Report Job Status on Success
         if: env.VERBOSE_NOTIFICATIONS == '1'
@@ -175,8 +178,8 @@ jobs:
         run: |
           source ./template/.github/scripts/apply.sh
         env:
-          PLATFORM_VERSION: ${{ matrix.platform }}
           OS_VERSION: ${{ matrix.os }}
+          PLATFORM_VERSION: ${{ matrix.platform }}
 
       - name: Apply Profile -- Report Job Status (Success)
         if: env.VERBOSE_NOTIFICATIONS == '1'
@@ -235,7 +238,7 @@ jobs:
         run:
           source ./.github/scripts/checklist.sh
 
-      - name: Create Release -- Generate Github Release Draft
+      - name: Create Release -- Generate GitHub Release Draft
         if: steps.branch_filter.outputs.match == 'TRUE'
         id: create_release
         uses: actions/github-script@v6
@@ -260,7 +263,7 @@ jobs:
       - name: Create Release -- Report Job Status on Success
         if: steps.branch_filter.outputs.match == 'TRUE'
         run: |
-          ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: automated release has been created!\nhttps://github.com/${USERNAME}/${PROJECT_NAME}/releases"
+          ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: automated release has been created!\nhttps://github.com/${USER_NAME}/${PROJECT_NAME}/releases"
 
       - name: Create Release -- Report Job Status on Failure
         if: failure()
@@ -271,7 +274,8 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      PROFILE_GENERATOR_SKIP_INSTALL: 1
+      PROFILE_GENERATOR_SKIP_POETRY: 1
+      PROFILE_GENERATOR_SKIP_PRECOMMIT: 1
 
     steps:
 
@@ -328,10 +332,106 @@ jobs:
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: documentation checks failed!"
 
-  push_repository_test:
-    needs: [_start_notification, documentation_test, ansible_lint_test, security_test_repo, shellcheck_test, toml_lint_test, workflow_lint_test]
+  precommit_test:
 
     runs-on: ubuntu-latest
+    env:
+      PROFILE_GENERATOR_SKIP_POETRY: 0
+      PROFILE_GENERATOR_SKIP_PRECOMMIT: 0
+    strategy:
+      matrix:
+        cookiecutter-toml-selection: [1, 2]
+
+    steps:
+
+      - name: Pre-Commit Test -- Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          path: 'template'
+
+      - name: Pre-Commit Test -- Setup Environment
+        run: |
+          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Pre-Commit Test -- Install Template Requirements
+        run: |
+          source ./template/.github/scripts/requirements.sh
+
+      - name: Pre-Commit Test -- Install tomll
+        run: |
+          sudo apt-get install -y golang-github-pelletier-go-toml
+
+      - name: Pre-Commit Test -- Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Pre-Commit -- Initialize Cache Locations
+        run: |
+          mkdir -p ~/.cache/pypoetry/virtualenvs
+          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/ansible_cache.sh  \
+            "$(pwd)/ansible_cache"                                                          \
+            ~/.ansible
+
+      - name: Pre-Commit -- Mount Ansible Cache
+        uses: actions/cache@v3
+        with:
+          key: ansible-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/profile/requirements.yml') }}-${{ env.CACHE_TTL }}
+          path: ansible_cache
+
+      - name: Pre-Commit Test -- Mount Poetry Cache
+        uses: actions/cache@v3
+        with:
+          key: poetry-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/pyproject.toml') }}-${{ runner.os }}-${{ env.CACHE_TTL }}
+          path: ~/.cache/pypoetry/virtualenvs/
+
+      - name: Pre-Commit Test -- Render Template
+        run: |
+          source ./template/.github/scripts/template.sh "${SELECTION_TOML}" "GitHub Action" "action@github.com"
+        env:
+          SELECTION_TOML: ${{ matrix.cookiecutter-toml-selection }}
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Pre-Commit Test -- Test Ansible Lint -- Expect Failure
+        run: |
+          source ./template/.github/scripts/test_precommit.sh "ansible-lint"
+
+      - name: Pre-Commit Test -- Test Commit Lint -- Expect Failure
+        run: |
+          source ./template/.github/scripts/test_precommit.sh "commit-lint"
+
+      - name: Pre-Commit Test -- Test TOML Lint -- Expect Failure
+        if: matrix.cookiecutter-toml-selection == 1
+        run: |
+          source ./template/.github/scripts/test_precommit.sh "toml-lint-1"
+
+      - name: Pre-Commit Test -- Test TOML Lint -- Expect Success
+        if: matrix.cookiecutter-toml-selection == 1
+        run: |
+          source ./template/.github/scripts/test_precommit.sh "toml-lint-2"
+
+      - name: Pre-Commit Test -- Report Job Status on Success
+        if: env.VERBOSE_NOTIFICATIONS == '1'
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: pre-commit hook test has passed!"
+
+      - name: Pre-Commit Test -- Report Job Status on Failure
+        if: failure()
+        run: |
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: pre-commit hook test has failed!"
+
+  push_repository_test:
+    needs: [_start_notification, ansible_lint_test, documentation_test, precommit_test, security_test_repo, shellcheck_test, toml_lint_test, yaml_lint_test]
+
+    runs-on: ubuntu-latest
+    env:
+      PROFILE_GENERATOR_SKIP_POETRY: 1
+      PROFILE_GENERATOR_SKIP_PRECOMMIT: 1
+      TEMPLATED_NAME_1: "profile-example-with-toml"
+      TEMPLATED_NAME_2: "profile-example-no-toml"
+      TEST_PUSH_TAG: "0.1.0"
 
     steps:
 
@@ -356,46 +456,40 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Push Test -- Initialize Cache Locations
-        run: |
-          mkdir -p ~/.cache/pypoetry/virtualenvs
-
-      - name: Push Test -- Mount Poetry Cache
-        uses: actions/cache@v3
-        with:
-          key: poetry-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/pyproject.toml') }}-${{ runner.os }}-${{ env.CACHE_TTL }}
-          path: ~/.cache/pypoetry/virtualenvs/
-
       - name: Push Test -- Render Template
         run: |
-          source ./template/.github/scripts/template.sh "GitHub Action" "action@github.com"
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+          source ./template/.github/scripts/template.sh "1" "GitHub Action" "action@github.com"
+          mv "${TEMPLATED_NAME}" "${TEMPLATED_NAME_1}"
+          source ./template/.github/scripts/template.sh "2" "GitHub Action" "action@github.com"
+          mv "${TEMPLATED_NAME}" "${TEMPLATED_NAME_2}"
 
-      - name: Push Test -- Clean Up Tags for Git Push
+      - name: Push Test -- Clean Up Tags for Git Push (${{ env.TEMPLATED_NAME_1 }})
         run: |
-          cd "${TEMPLATED_NAME}"
-          git checkout master
+          cd "${TEMPLATED_NAME_1}"
+          git checkout "${PROFILE_GENERATOR_BRANCH_NAME_BASE}"
           git tag --delete 0.0.0  # Don't Repush
-          git tag 0.1.0
+          echo "test commit" > test_file.txt
+          git add test_file.txt
+          git commit -m 'feat(TEST_FILE): add test file'
+          git tag "${TEST_PUSH_TAG}"
 
-      - name: Push Test -- Push To Test Repository (master)
+      - name: Push Test -- Push To Test Repository (master) (${{ env.TEMPLATED_NAME_1 }})
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.REMOTE_TOKEN }}
           branch: master
           tags: false
-          directory: ${{ env.TEMPLATED_NAME }}
+          directory: ${{ env.TEMPLATED_NAME_1 }}
           repository: ${{ secrets.REMOTE_ORIGIN }}
           force: true
 
-      - name: Push Test -- Push To Test Repository (production)
+      - name: Push Test -- Push To Test Repository (production) (${{ env.TEMPLATED_NAME_2 }})
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.REMOTE_TOKEN }}
           branch: production
           tags: false
-          directory: ${{ env.TEMPLATED_NAME }}
+          directory: ${{ env.TEMPLATED_NAME_2 }}
           repository: ${{ secrets.REMOTE_ORIGIN }}
           force: true
 
@@ -405,7 +499,7 @@ jobs:
           github_token: ${{ secrets.REMOTE_TOKEN }}
           branch: production
           tags: true
-          directory: ${{ env.TEMPLATED_NAME }}
+          directory: ${{ env.TEMPLATED_NAME_1 }}
           repository: ${{ secrets.REMOTE_ORIGIN }}
           force: true
 
@@ -417,7 +511,7 @@ jobs:
       - name: Push Test -- Report Job Status on Failure
         if: failure()
         run: |
-          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICdATION}" ":x: push failed to trigger!"
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: push failed to trigger!"
 
   security_test_repo:
 
@@ -434,8 +528,8 @@ jobs:
           source ./{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
           source ./{{cookiecutter.profile_slug}}/.github/scripts/pushed_commit_range.sh
         env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
           GITHUB_CONTEXT: ${{ toJson(github) }}
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
       - name: Security Test Repo -- Run Trufflehog
         uses: trufflesecurity/trufflehog@v3.20.0
@@ -458,7 +552,8 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      PROFILE_GENERATOR_SKIP_INSTALL: 1
+      PROFILE_GENERATOR_SKIP_POETRY: 1
+      PROFILE_GENERATOR_SKIP_PRECOMMIT: 1
 
     steps:
       - name: Shellcheck -- Checkout Repository
@@ -495,7 +590,9 @@ jobs:
 
       - name: Shellcheck -- Shellcheck Rendered Scripts
         run: |
-          shellcheck "${TEMPLATED_NAME}"/.github/scripts/*.sh
+          cd "${TEMPLATED_NAME}"
+          shellcheck ./.github/scripts/*.sh
+          shellcheck -x ./.pre-commit/*.sh
 
       - name: Shellcheck -- Report Job Status on Success
         if: env.VERBOSE_NOTIFICATIONS == '1'
@@ -511,7 +608,8 @@ jobs:
 
     runs-on: ubuntu-latest
     env:
-      PROFILE_GENERATOR_SKIP_INSTALL: 1
+      PROFILE_GENERATOR_SKIP_POETRY: 1
+      PROFILE_GENERATOR_SKIP_PRECOMMIT: 1
 
     steps:
       - name: Toml Lint -- Checkout Repository
@@ -544,7 +642,7 @@ jobs:
       - name: Toml Lint -- Run Linter
         run: |
           cd "${TEMPLATED_NAME}"
-          tomll pyproject.toml
+          find . -type f -name "*.toml" -exec tomll "{}" \;
           git diff --exit-code
 
       - name: Toml Lint -- Report Job Status (Success)
@@ -557,59 +655,71 @@ jobs:
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: toml linting has failed!"
 
-  workflow_lint_test:
+  yaml_lint_test:
 
     runs-on: ubuntu-latest
     env:
-      PROFILE_GENERATOR_SKIP_INSTALL: 1
+      PROFILE_GENERATOR_SKIP_POETRY: 1
+      PROFILE_GENERATOR_SKIP_PRECOMMIT: 1
+    strategy:
+      matrix:
+        cookiecutter-toml-selection: [1, 2]
 
     steps:
-      - name: Workflow Lint -- Checkout Repository
+      - name: Yaml Lint Test -- Checkout Repository
         uses: actions/checkout@v3
         with:
           path: 'template'
 
-      - name: Workflow Lint -- Setup Environment
+      - name: Yaml Lint Test -- Setup Environment
         run: |
           source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Workflow Lint -- Install Template Requirements
+      - name: Yaml Lint Test-- Install Template Requirements
         run: |
           source ./template/.github/scripts/requirements.sh
 
-      - name: Workflow Lint -- Set up Python ${{ env.PYTHON_VERSION }}
+      - name: Yaml Lint Test -- Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Workflow Lint -- Render Template
+      - name: Yaml Lint Test -- Render Template
         run: |
-          source ./template/.github/scripts/template.sh
+          source ./template/.github/scripts/template.sh "${SELECTION_TOML}"
         env:
+          SELECTION_TOML: ${{ matrix.cookiecutter-toml-selection }}
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Workflow Lint -- Lint Template Workflows
+      - name: Yaml Lint Test -- Lint Template GitHub Workflows
         uses: ibiqlik/action-yamllint@v3
         with:
           format: standard
           file_or_dir: ./template/.github/workflows
           config_file: ./${{ env.TEMPLATED_NAME }}/profile/.yamllint.yml
 
-      - name: Workflow Lint -- Lint Rendered Workflows
+      - name: Yaml Lint Test -- Lint Rendered GitHub Workflows
         uses: ibiqlik/action-yamllint@v3
         with:
           format: standard
           file_or_dir: ./${{ env.TEMPLATED_NAME }}/.github/workflows/
           config_file: ./${{ env.TEMPLATED_NAME }}/profile/.yamllint.yml
 
-      - name: Workflow Lint -- Report Job Status on Success
+      - name: Yaml Lint Test -- Lint Rendered Top Level Configuration Files
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          format: standard
+          file_or_dir: ./${{ env.TEMPLATED_NAME }}/.pre-commit-config.yaml
+          config_file: ./${{ env.TEMPLATED_NAME }}/profile/.yamllint.yml
+
+      - name: Yaml Lint Test -- Report Job Status on Success
         if: env.VERBOSE_NOTIFICATIONS == '1'
         run: |
-          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: workflow linting checks succeeded!"
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: YAML linting checks succeeded!"
 
-      - name: Workflow Lint -- Report Job Status on Failure
+      - name: Yaml Lint Test -- Report Job Status on Failure
         if: failure()
         run: |
-          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: workflow linting checks failed!"
+          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: YAML linting checks failed!"

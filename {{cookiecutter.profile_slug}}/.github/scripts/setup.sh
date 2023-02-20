@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # .github/scripts/setup.sh
-# Configures environment variables for Github Actions.
+# Configures environment variables for GitHub Actions.
 
 # CI only script.
 
@@ -17,7 +17,7 @@ main() {
     echo "CACHE_TTL=$(date +%d)"
     echo "NOTIFICATION=${PROJECT_NAME} [<${WORKFLOW_URL}|${BRANCH_OR_TAG}>]"
     echo "WEBHOOK_URL=${WEBHOOK_URL}"
-  }>> "$GITHUB_ENV"
+  } >> "$GITHUB_ENV"
 
 }
 

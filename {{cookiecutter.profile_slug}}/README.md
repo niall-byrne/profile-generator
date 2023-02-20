@@ -69,6 +69,25 @@ When developing your profile locally, it's handy to setup a `spec.json` file tha
 
 Please read the [Mac Maker Job Spec](https://mac-maker.readthedocs.io/en/latest/project/4.spec_files.html) documentation for details on this. (It's a quick read.)
 
+## Poetry
+
+Poetry is leveraged to manage the Python dependencies:
+- [Adding Python Packages with Poetry](https://python-poetry.org/docs/cli/#add)
+- [Removing Python Packages With Poetry](https://python-poetry.org/docs/cli/#remove)
+
+You can also conveniently execute commands inside the Python virtual environment by using: `poetry run [my command here]`
+
+## Pre-Commit
+
+The Python library [pre-commit](https://pre-commit.com/) comes installed with a few useful initial hooks:
+
+### Default Pre-Commit Hooks:
+| Hook Name          | Description                                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------------------ |
+| ansible-lint       | Checks your profile for best Ansible practices and behaviour.                                                |
+| commitizen         | Runs [commitizen](https://commitizen-tools.github.io/commitizen/) on your commit message to validate it.     |
+| pyproject.toml     | Optionally runs [tomll](https://github.com/pelletier/go-toml) on your TOML configuration file.               |
+
 ## Default License
 
 An [MIT](LICENSE) license has been generated for you by default, feel free to discard/change as you see fit.

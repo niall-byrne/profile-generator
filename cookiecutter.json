@@ -1,6 +1,7 @@
 {
     "profile_name": "Profile Example",
     "profile_slug": "{{ cookiecutter.profile_name|slugify }}",
+    "optional_toml_linting": ["true", "false"],
     "description": "An example Mac Maker profile.",
     "github_handle": "osx-provisioner",
     "author": "Niall Byrne",

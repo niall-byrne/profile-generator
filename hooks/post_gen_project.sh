@@ -13,8 +13,15 @@ initialize_git() {
 }
 
 initialize_poetry() {
-  if [[ -z "${PROFILE_GENERATOR_SKIP_INSTALL}" ]]; then
+  if [[ "${PROFILE_GENERATOR_SKIP_POETRY}" != "1" ]]; then
     poetry install
+  fi
+}
+
+initialize_precommit() {
+  if [[ "${PROFILE_GENERATOR_SKIP_PRECOMMIT}" != "1" ]]; then
+    poetry run pre-commit install -t pre-commit -t commit-msg
+    poetry run ansible-galaxy install --timeout 90 -r profile/requirements.yml
   fi
 }
 
@@ -28,6 +35,7 @@ main() {
   update_template_values
   initialize_git
   initialize_poetry
+  initialize_precommit
 }
 
 main

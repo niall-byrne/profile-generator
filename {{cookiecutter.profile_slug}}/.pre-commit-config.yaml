@@ -1,0 +1,28 @@
+---
+repos:
+  - repo: local
+    hooks:
+      - id: ansible-lint
+        name: ansible-lint
+        description: "Check the profile for Ansible best practices."
+        entry: ./.pre-commit/ansible-lint.sh
+        files: "^profile/.+\\.(yaml|yml)$|^profile/.ansible-lint$"
+        language: system
+        pass_filenames: false
+        stages: [commit]
+      - id: commit-lint
+        name: commit-lint
+        description: "Check whether the commit message follows committing rules."
+        entry: ./.pre-commit/commit-lint.sh
+        language: system
+        stages: [commit-msg]
+{%- if cookiecutter.optional_toml_linting == 'true' %}
+      - id: toml-lint
+        name: toml-lint
+        description: "Lint the profile's TOML files."
+        entry: ./.pre-commit/toml-lint.sh
+        files: "^.+\\.toml$"
+        language: system
+        stages: [commit]
+        pass_filenames: true
+{%- endif %}
