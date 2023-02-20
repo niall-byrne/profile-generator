@@ -12,7 +12,8 @@ set -eo pipefail
 main() {
 
   echo "{}" > package.json
-  TAG="$(git tag | sort --version-sort | tail -n 2 | head -n 1)"
+
+  TAG="$(git tag -l --sort=refname | grep -E "[0-9]+\.[0-9]+\.[0-9]+" | tail -n 2 | head -n 1)"
   CHANGE_LOG_CONTENT="$(npx -q generate-changelog -f - -t "${TAG}")"
 
   {
@@ -25,4 +26,4 @@ main() {
 
 }
 
-main "$@"
+main

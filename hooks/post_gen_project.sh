@@ -6,7 +6,7 @@ initialize_git() {
   git stage .
   git commit -m "build(COOKIECUTTER): initial generation"
   git symbolic-ref HEAD refs/heads/master
-  git tag v0.0.0
+  git tag 0.0.0
   git checkout -b production
   git checkout master
   mkdir -p files templates
