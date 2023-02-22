@@ -131,6 +131,24 @@ The Python library [pre-commit](https://pre-commit.com/) comes installed with a 
 | commitizen         | Runs [commitizen](https://commitizen-tools.github.io/commitizen/) on your commit message to validate it.     |
 | pyproject.toml     | Optionally runs [tomll](https://github.com/pelletier/go-toml) on your TOML configuration file.               |
 
+## Restricted Paths
+
+Certain versions of the Ansible tool chain *may* use these folders, which you would be best to avoid:
+- .ansible/
+- .cache/
+- profile/.ansible/
+- profile/.cache/
+
+Mac Maker itself also writes some data overtop of the role (ephemerally at run time) in order to process it, this means there are a few paths that you should shy away from using:
+- spec.json **\***
+- profile/.mac_maker/
+- profile/collections/ **\***
+- profile/env/ **\***
+- profile/inventory/ **\***
+- profile/roles/ **\***
+  
+**\*** **(these paths are marked for deprecation, soon freeing them up for use)**
+
 ## Default License
 
 An [MIT](LICENSE) license has been generated for you by default, feel free to discard/change as you see fit.

@@ -1,0 +1,4 @@
+---
+version:
+  maximum: "{{ cookiecutter._MAC_MAKER_MAX_VERSION }}"
+  minimum: "{{ cookiecutter._MAC_MAKER_MIN_VERSION }}"

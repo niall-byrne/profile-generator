@@ -12,10 +12,10 @@
     version = "0.1.0"
 
     [tool.poetry.dependencies]
-      python = ">=3.9.0,<4.0"
+      python = ">={{cookiecutter._MAC_MAKER_PYTHON_VERSION}}.0,<4.0"
 
     [tool.poetry.dev-dependencies]
-      ansible = "^7.2.0"
+      ansible = "^{{ cookiecutter._MAC_MAKER_ANSIBLE_VERSION }}.0"
       commitizen = "^2.42.0"
       pre-commit = "^3.1.0"
       yamllint = "^1.29.0"

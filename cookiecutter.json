@@ -13,11 +13,14 @@
     ],
     "_BRANCH_NAME_BASE": "master",
     "_BRANCH_NAME_DEVELOPMENT": "dev",
-    "_GITHUB_CI_PYTHON_VERSION": "3.9",
     "_GITHUB_ACTION_CACHE": "actions/cache@v3",
     "_GITHUB_ACTION_CHECKOUT": "actions/checkout@v3",
     "_GITHUB_ACTION_MARKDOWN_LINK_CHECK": "gaurav-nelson/github-action-markdown-link-check@v1",
     "_GITHUB_ACTION_PYTHON": "actions/setup-python@v4",
     "_GITHUB_ACTION_TRUFFLEHOG": "trufflesecurity/trufflehog@v3.20.0",
-    "_GITHUB_ACTION_YAMLLINT": "ibiqlik/action-yamllint@v3"
+    "_GITHUB_ACTION_YAMLLINT": "ibiqlik/action-yamllint@v3",
+    "_MAC_MAKER_ANSIBLE_VERSION": "7.2",
+    "_MAC_MAKER_MAX_VERSION": "1.0.0",
+    "_MAC_MAKER_MIN_VERSION": "0.0.6",
+    "_MAC_MAKER_PYTHON_VERSION": "3.9"
 }

@@ -1,3 +1,11 @@
-.txt
+.ansible
 .cache
+.idea
+.tool-versions
 poetry.lock
+profile/.mac_maker
+profile/collections
+profile/env
+profile/inventory
+profile/roles
+spec.json

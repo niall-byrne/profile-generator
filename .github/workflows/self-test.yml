@@ -714,7 +714,7 @@ jobs:
         uses: ibiqlik/action-yamllint@v3
         with:
           format: standard
-          file_or_dir: ./${{ env.TEMPLATED_NAME }}/.pre-commit-config.yaml
+          file_or_dir: ./${{ env.TEMPLATED_NAME }}/.pre-commit-config.yaml ./${{ env.TEMPLATED_NAME }}/mac_maker.yml
           config_file: ./${{ env.TEMPLATED_NAME }}/profile/.yamllint.yml
 
       - name: Yaml Lint Test -- Report Job Status on Success

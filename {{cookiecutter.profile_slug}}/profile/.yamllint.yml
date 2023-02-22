@@ -3,7 +3,12 @@
 extends: default
 
 ignore: |
-  .cache
+  .ansible/
+  .cache/
+  .idea/
+  .mac_maker/
+  collections/
+  roles/
 
 rules:
   braces:
