@@ -17,20 +17,19 @@ Use [Mac Maker](https://github.com/osx-provisioner/mac_maker) to apply this prof
 The template has generated you a development environment for a [Mac Maker](https://github.com/osx-provisioner/mac_maker.git) machine profile, with [functional CI](./.github/workflows/push.yml).
 
 The default configuration has some excellent functionality out of the box:
-- Installs the [Homebrew](https://brew.sh/) and [Xcode](https://developer.apple.com/xcode/) cli tools automatically.
-  - You may see a "Please Install Me" Xcode popup dialogue, safely ignore this and wait for your finished Mac.
-- A centralized package manifest in the [profile/vars/main.yml](./profile/vars/main.yml) file.
+- Installs the [Homebrew](https://brew.sh/) cli tools and the content of the centralized package manifest in the [profile/vars/main.yml](./profile/vars/main.yml) file.
 - A functional [ClamAV](https://github.com/Cisco-Talos/clamav) install to protect you against malicious downloads.
 - Node.js and Python, managed by [asdf](https://asdf-vm.com/#/).
   - Activate these language installs by following [these](https://asdf-vm.com/#/core-manage-asdf) instructions for your shell.
-- Easily mix and match Ansible roles in the [profile/install.yml](./profile/install.yml) file.
 
-#### Important Note about ClamAV on Catalina and Big Sur
+Extend this further by mixing and matching Ansible roles in the [profile/install.yml](./profile/install.yml) file.
+
+#### Am Important Note about ClamAV on Catalina and Later
 
 - To get the most out of your ClamAV install, make sure you grant it "Full Disk Access".
 - Please take a quick look at the documentation [here](https://github.com/osx-provisioner/role-clamav).
 
-## This Looks Complicated, How Can I Customize This?
+## This Looks Complicated, How Can I Customize It?
 
 Start [here](./profile/vars/main.yml), it's really much simpler than you might think.
 
@@ -45,9 +44,11 @@ To start branching out, and really customizing things, get familiar with the fol
    - If you add additional roles, include them here, so your Profile includes everything it needs.
    - Make sure to read the documentation any new roles and add the required variables to your [main vars file](./profile/vars/main.yml).
 
+The more customized your want your profile to become, the more you'll benefit from reading up on [ansible](https://ansible.com).
+
 ## Configuration Files (More Complex Knob Tweaking)
 
-There some configuration files you can fine tune as you see fit, they require more familiarity with Ansible:
+There some configuration files you can fine tune as you see fit:
 
  - [.ansible-lint](profile/.ansible-lint)
    - This is configuration for [ansible-lint](https://ansible-lint.readthedocs.io/en/latest/), which is used in the included GitHub CI pipeline.
@@ -62,12 +63,54 @@ Please read the [Mac Maker Profile](https://mac-maker.readthedocs.io/en/latest/p
 
 ## Developing Your Profile
 
-[Mac Maker](https://github.com/osx-provisioner/mac_maker) can work with public GitHub repositories, or with `spec.json` files.
+[Mac Maker](https://github.com/osx-provisioner/mac_maker) can work with **public** GitHub repositories, or with privately maintained `spec.json` files.
 
-A Mac Maker Profile has a specific directory structure, but the `spec.json` file lets you mix and match where the directories and files are. It's a bit inflexible in certain ways, because it requires absolute paths, but this makes it ideal to work off a USB stick or any portable media.
-When developing your profile locally, it's handy to setup a `spec.json` file that points to all the locations you need, so you can just re-run Mac Maker to test.
+The Profile has a specific directory structure, but the `spec.json` file lets you mix and match where the directories and files are. It's a bit inflexible in certain ways, because it requires absolute paths, but this makes it ideal to work off a USB stick or any portable media.
+When developing your profile locally, it's handy to setup a `spec.json` file that points to all the locations you need, so you can run Mac Maker to test.
+
+(A common use case for `spec.json` files, is to clone a **private** git repository to a USB key, and configure the `spec.json` to point to the USB key locations.)
 
 Please read the [Mac Maker Job Spec](https://mac-maker.readthedocs.io/en/latest/project/4.spec_files.html) documentation for details on this. (It's a quick read.)
+
+## Securing Your Profile
+
+Take care not to check in any privileged content such as passwords, or api keys to your profile.  This is especially true if you're working with a **public** GitHub repository. 
+
+### Environment Variables
+
+- The recommended best practice to work around this is to use environment variables.  These are easily loaded into your shell before your run Mac Maker.  
+- This gives you the ability to parameterize certain aspects of your profile that may differ from machine to machine.
+- Use Mac Maker's [precheck](./profile/__precheck__/env.yml) functionality to document your profile's environment variables.
+
+#### Using Environment Variables in Practice
+
+In practice this might mean keeping a small shell script that sets variables somewhere safe (such as an encrypted USB key):
+```shell
+#!/bin/bash
+export MY_SECRET_VALUE="very secret"
+```
+
+Before applying your profile, you would insert your USB key and source your shell script:
+```
+$ source /Volumes/USB/my_secret_script.sh
+$ ./mac_maker
+```
+ 
+Your environment variables will then be accessible inside Ansible configuration:
+```yaml
+---
+- name: Read My Secret
+  ansible.builtin.set_fact:
+    ansible_variable: {% raw %}"{{ lookup('env', 'MY_SECRET_VALUE') }}"{% endraw %}
+```
+
+You can find simple examples of this in the example profile [here](./profile/vars/main.yml).
+
+### Ansible Vault
+
+- Ansible also has an encryption system called [vault](https://docs.ansible.com/ansible/latest/vault_guide) which is used to encrypt files containing sensitive data.
+- This would allow you to encrypt and decrypt yaml files containing sensitive material- but I would still recommend NOT making these files public.
+- If you're working with securely stored vault files, you can use the `ANSIBLE_VAULT_PASSWORD_FILE` environment variable documented [here](https://docs.ansible.com/ansible/latest/vault_guide/vault_using_encrypted_content.html#setting-a-default-password-source) to decrypt your data during installation.
 
 ## Poetry
 
