@@ -261,7 +261,7 @@ jobs:
         uses: {% endraw %}{{ cookiecutter._GITHUB_ACTION_TRUFFLEHOG }}{% raw %}
         with:
           path: .
-          base: ${{ env.PUSHED_COMMIT_RANGE }}
+          base: ${{ env.PUSHED_COMMIT_START }}
           head: ${{ env.BRANCH_OR_TAG }}
 
       - name: Security Test -- Report Job Status on Success

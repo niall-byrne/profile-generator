@@ -538,7 +538,7 @@ jobs:
         uses: trufflesecurity/trufflehog@v3.20.0
         with:
           path: .
-          base: ${{ env.PUSHED_COMMIT_RANGE }}
+          base: ${{ env.PUSHED_COMMIT_START }}
           head: ${{ env.BRANCH_OR_TAG }}
 
       - name: Security Test Repo -- Report Job Status on Success

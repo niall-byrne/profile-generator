@@ -1,39 +1,47 @@
 #!/bin/bash
 
 # .github/scripts/pushed_commit_range.sh
-# Retrieves the range of the commits in a push, and sets the PUSHED_COMMIT_RANGE environment variables.
+# Retrieves the range of the commits in a push, and sets the PUSHED_COMMIT_START, PUSHED_COMMIT_REV_RANGE variables.
 
-# GITHUB_CONTEXT:  The github action context object as an environment variable.
+# PROFILE_GENERATOR_PUSH_FALLBACK_INDEX:     Optionally set fallback behaviour when no changed commits are detected.  (Default is the first commit in the project.)
+# PROFILE_GENERATOR_PUSH_FALLBACK_REV_RANGE: Optionally set fallback behaviour when no changed commits are detected.  (Default is HEAD, all commits.)
+# GITHUB_CONTEXT:                            The github action context object as an environment variable.
 
 # CI only script
 
 set -eo pipefail
 
+PROFILE_GENERATOR_PUSH_FALLBACK_INDEX="${PROFILE_GENERATOR_PUSH_FALLBACK_INDEX-$(git rev-list --max-parents=0 HEAD)}"
+PROFILE_GENERATOR_PUSH_FALLBACK_REV_RANGE="${PROFILE_GENERATOR_PUSH_FALLBACK_REV_RANGE-HEAD}"
 
-get_all_commits() {
-  git rev-list --max-parents=0 HEAD
+fallback_behaviour() {
+  echo "WARNING: Unable to determine number of changed commits."
+  echo "WARNING: Fallback values are being used instead."
+  PUSHED_COMMIT_START="${PROFILE_GENERATOR_PUSH_FALLBACK_INDEX}"
+  PUSHED_COMMIT_REV_RANGE="${PROFILE_GENERATOR_PUSH_FALLBACK_REV_RANGE}"
 }
-
 
 main() {
 
-  PUSHED_COMMIT_RANGE="HEAD~$(echo "$GITHUB_CONTEXT" | jq '.event.commits | length')"
+  COMMIT_COUNT="$(echo "${GITHUB_CONTEXT}" | jq '.event.commits | length')"
 
-  if [[ "${PUSHED_COMMIT_RANGE}" == "HEAD~0" ]]; then
-    PUSHED_COMMIT_RANGE="$(get_all_commits)"
+  PUSHED_COMMIT_START="HEAD~${COMMIT_COUNT}"
+  PUSHED_COMMIT_REV_RANGE="${PUSHED_COMMIT_START}..HEAD"
+
+  echo "DEBUG: GitHub reports ${COMMIT_COUNT} commit(s) have changed."
+
+  if [[ "${PUSHED_COMMIT_START}" == "HEAD~0" ]]; then
+    fallback_behaviour
   fi
 
-  set +e
-    if ! git rev-parse "${PUSHED_COMMIT_RANGE}"; then
-      PUSHED_COMMIT_RANGE="$(get_all_commits)"
-    fi
-  set -e
+  if ! git rev-parse "${PUSHED_COMMIT_START}" >> /dev/null 2>&1; then
+    fallback_behaviour
+  fi
 
   {
-    echo "PUSHED_COMMIT_RANGE<<EOF"
-    echo "${PUSHED_COMMIT_RANGE}"
-    echo "EOF"
-  } >> "$GITHUB_ENV"
+    echo "PUSHED_COMMIT_REV_RANGE=${PUSHED_COMMIT_REV_RANGE}"
+    echo "PUSHED_COMMIT_START=${PUSHED_COMMIT_START}"
+  } >> "${GITHUB_ENV}"
 
 }
 
