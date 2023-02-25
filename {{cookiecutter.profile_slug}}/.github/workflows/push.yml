@@ -139,67 +139,56 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Create Release -- Branch Filter
-        id: branch_filter
-        run: |
-          [[ "${{ github.event.ref }}" =~ ^refs/tags/[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$ ]] && MATCH="TRUE"
-          [[ "${{ github.event.ref }}" == "refs/tags/0.0.0" ]] && MATCH="FALSE"
-          echo "MATCH=${MATCH}" >> $GITHUB_OUTPUT
-        env:
-          MATCH: false
-
       - name: Create Release -- Checkout Repository
-        if: steps.branch_filter.outputs.match == 'TRUE'
+        uses: {% endraw %}{{ cookiecutter._GITHUB_ACTION_CHECKOUT }}{% raw %}
+
+      - name: Create Release -- Filter Release Candidates
+        id: filter
+        run: |
+          source .github/scripts/release-candidate.sh "${{ github.event.ref }}"
+
+      - name: Create Release -- Checkout Repository (All Commits)
+        if: steps.filter.outputs.release_candidate == 'TRUE'
         uses: {% endraw %}{{ cookiecutter._GITHUB_ACTION_CHECKOUT }}{% raw %}
         with:
           fetch-depth: 0
 
       - name: Create Release -- Setup Environment
-        if: steps.branch_filter.outputs.match == 'TRUE'
+        if: steps.filter.outputs.release_candidate == 'TRUE'
         run: |
           source ./.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
       - name: Create Release -- Install poetry
-        if: steps.branch_filter.outputs.match == 'TRUE'
+        if: steps.filter.outputs.release_candidate == 'TRUE'
         run: |
           source ./.github/scripts/poetry.sh
 
       - name: Create Release -- Check 'pyproject.toml' Matches Tag
-        if: steps.branch_filter.outputs.match == 'TRUE'
+        if: steps.filter.outputs.release_candidate == 'TRUE'
         run: |
           source ./.github/scripts/version.sh
 
       - name: Create Release -- Generate Changelog
-        if: steps.branch_filter.outputs.match == 'TRUE'
+        if: steps.filter.outputs.release_candidate == 'TRUE'
         run:
           source ./.github/scripts/changelog.sh
 
       - name: Create Release -- Generate GitHub Release Draft
-        if: steps.branch_filter.outputs.match == 'TRUE'
+        if: steps.filter.outputs.release_candidate == 'TRUE'
         id: create_release
-        uses: actions/github-script@v6
+        uses: {% endraw %}{{ cookiecutter._GITHUB_ACTION_SCRIPT }}{% raw %}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            try {
-              const result = await github.rest.repos.createRelease({
-                body: process.env.CHANGE_LOG_CONTENT,
-                draft: true,
-                name: "Release " + process.env.BRANCH_OR_TAG,
-                owner: context.repo.owner,
-                prerelease: false,
-                repo: context.repo.repo,
-                tag_name: process.env.BRANCH_OR_TAG,
-              });
-              return result
-            } catch (error) {
-              core.setFailed(error.message);
-            }
+            const script = require('./.github/scripts/release.js')
+            const body = process.env.CHANGE_LOG_CONTENT;
+            const tag = process.env.BRANCH_OR_TAG;
+            return await script({ body, context, core, github, tag })
 
       - name: Create Release -- Report Job Status (Success)
-        if: steps.branch_filter.outputs.match == 'TRUE'
+        if: steps.filter.outputs.release_candidate == 'TRUE'
         run: |
           ./.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: automated release has been created:\nhttps://github.com/${USER_NAME}/${PROJECT_NAME}/releases"
 

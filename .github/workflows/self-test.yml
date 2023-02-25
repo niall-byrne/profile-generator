@@ -2,9 +2,9 @@
 name: profile-generator-self-test
 
 # Required GitHub Repository Secrets:
-# REMOTE_TOKEN      - GitHub Token With Access To This Repo
-# REMOTE_ORIGIN     - The git remote repository name (organization/repo)
-# SLACK_WEBHOOK     - The slack webhook for build notifications
+# REMOTE_TOKEN      - GitHub token with access to the test repository.
+# REMOTE_ORIGIN     - The git remote repository name (organization/repo).
+# SLACK_WEBHOOK     - The slack webhook for build notifications.
 
 on:
   push:
@@ -199,71 +199,59 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Create Release -- Branch Filter
-        id: branch_filter
-        run: |
-          [[ "${{ github.event.ref }}" =~ ^refs/tags/[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+$ ]] && MATCH="TRUE"
-          [[ "${{ github.event.ref }}" == "refs/tags/0.0.0" ]] && MATCH="FALSE"
-          echo "MATCH=${MATCH}" >> $GITHUB_OUTPUT
-        env:
-          MATCH: false
-
       - name: Create Release -- Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Create Release -- Filter Release Candidates
+        id: filter
+        run: |
+          source ./{{cookiecutter.profile_slug}}/.github/scripts/release-candidate.sh "${{ github.event.ref }}"
+
+      - name: Create Release -- Checkout Repository (All Commits)
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
       - name: Create Release -- Setup Environment
-        if: steps.branch_filter.outputs.match == 'TRUE'
+        if: steps.filter.outputs.release_candidate == 'TRUE'
         run: |
           source ./{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
       - name: Create Release -- Install Poetry
-        if: steps.branch_filter.outputs.match == 'TRUE'
+        if: steps.filter.outputs.release_candidate == 'TRUE'
         run: |
           source ./{{cookiecutter.profile_slug}}/.github/scripts/poetry.sh "install-poetry"
 
       - name: Create Release -- Check 'pyproject.toml' Matches Tag
-        if: steps.branch_filter.outputs.match == 'TRUE'
+        if: steps.filter.outputs.release_candidate == 'TRUE'
         run: |
           source ./{{cookiecutter.profile_slug}}/.github/scripts/version.sh
 
       - name: Create Release -- Generate Changelog
-        if: steps.branch_filter.outputs.match == 'TRUE'
+        if: steps.filter.outputs.release_candidate == 'TRUE'
         run:
           source ./{{cookiecutter.profile_slug}}/.github/scripts/changelog.sh
 
-      - name: Create Release -- Append Deploy Checklist
-        if: steps.branch_filter.outputs.match == 'TRUE'
-        run:
-          source ./.github/scripts/checklist.sh
-
       - name: Create Release -- Generate GitHub Release Draft
-        if: steps.branch_filter.outputs.match == 'TRUE'
+        if: steps.filter.outputs.release_candidate == 'TRUE'
         id: create_release
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            try {
-              const result = await github.rest.repos.createRelease({
-                body: process.env.CHANGE_LOG_CONTENT,
-                draft: true,
-                name: "Release " + process.env.BRANCH_OR_TAG,
-                owner: context.repo.owner,
-                prerelease: false,
-                repo: context.repo.repo,
-                tag_name: process.env.BRANCH_OR_TAG,
-              });
-              return result
-            } catch (error) {
-              core.setFailed(error.message);
-            }
+            const script = require('./{{cookiecutter.profile_slug}}/.github/scripts/release.js');
+            const body = process.env.CHANGE_LOG_CONTENT + "\n" + process.env.CHECK_LIST_CONTENT;
+            const tag = process.env.BRANCH_OR_TAG;
+            await script({ body, context, core, github, tag })
+        env:
+          CHECK_LIST_CONTENT: |
+            ## Deployment Checklist
+            - [] Ensure master points to new tag
 
       - name: Create Release -- Report Job Status on Success
-        if: steps.branch_filter.outputs.match == 'TRUE'
+        if: steps.filter.outputs.release_candidate == 'TRUE'
         run: |
           ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: automated release has been created!\nhttps://github.com/${USER_NAME}/${PROJECT_NAME}/releases"
 
@@ -466,11 +454,22 @@ jobs:
           source ./template/.github/scripts/template.sh "2" "GitHub Action" "action@github.com"
           mv "${TEMPLATED_NAME}" "${TEMPLATED_NAME_2}"
 
+      - name: Push Test -- Clean Up Test Releases
+        run: |
+          source ./template/.github/scripts/prune_test_releases.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.REMOTE_TOKEN }}
+          REMOTE_ORIGIN: ${{ secrets.REMOTE_ORIGIN }}
+
       - name: Push Test -- Clean Up Tags for Git Push (${{ env.TEMPLATED_NAME_1 }})
         run: |
           cd "${TEMPLATED_NAME_1}"
           git checkout "${PROFILE_GENERATOR_BRANCH_NAME_BASE}"
           git tag --delete 0.0.0  # Don't Repush
+
+      - name: Push Test -- Test Commit (${{ env.TEMPLATED_NAME_1 }})
+        run: |
+          cd "${TEMPLATED_NAME_1}"
           echo "test commit" > test_file.txt
           git add test_file.txt
           git commit -m 'feat(TEST_FILE): add test file'
