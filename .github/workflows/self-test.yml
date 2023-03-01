@@ -93,14 +93,14 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Ansible Lint -- Install Template Requirements
-        run: |
-          source ./template/.github/scripts/requirements.sh
-
       - name: Ansible Lint -- Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Ansible Lint -- Install Template Requirements
+        run: |
+          source ./template/.github/scripts/requirements.sh
 
       - name: Ansible Lint -- Initialize Cache Locations
         run: |
@@ -119,7 +119,7 @@ jobs:
         uses: actions/cache@v3
         with:
           key: poetry-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/pyproject.toml') }}-${{ runner.os }}-${{ env.CACHE_TTL }}
-          path: ~/.cache/pypoetry/virtualenvs/
+          path: ~/.cache/pypoetry/virtualenvs
 
       - name: Ansible Lint -- Render Template
         run: |
@@ -278,14 +278,14 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Documentation Test -- Install Template Requirements
-        run: |
-          source ./template/.github/scripts/requirements.sh
-
       - name: Documentation Test -- Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Documentation Test -- Install Template Requirements
+        run: |
+          source ./template/.github/scripts/requirements.sh
 
       - name: Documentation Test -- Render Template
         run: |
@@ -342,6 +342,11 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
+      - name: Pre-Commit Test -- Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
       - name: Pre-Commit Test -- Install Template Requirements
         run: |
           source ./template/.github/scripts/requirements.sh
@@ -349,11 +354,6 @@ jobs:
       - name: Pre-Commit Test -- Install tomll
         run: |
           sudo apt-get install -y golang-github-pelletier-go-toml
-
-      - name: Pre-Commit Test -- Set up Python ${{ env.PYTHON_VERSION }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Pre-Commit -- Initialize Cache Locations
         run: |
@@ -372,7 +372,7 @@ jobs:
         uses: actions/cache@v3
         with:
           key: poetry-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/pyproject.toml') }}-${{ runner.os }}-${{ env.CACHE_TTL }}
-          path: ~/.cache/pypoetry/virtualenvs/
+          path: ~/.cache/pypoetry/virtualenvs
 
       - name: Pre-Commit Test -- Render Template
         run: |
@@ -434,14 +434,20 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Push Test -- Install Template Requirements
-        run: |
-          source ./template/.github/scripts/requirements.sh
-
       - name: Push Test -- Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Push Test -- Install Template Requirements
+        run: |
+          source ./template/.github/scripts/requirements.sh
+
+      - name: Push Test -- Clean Up Test Releases
+        run: |
+          source ./template/.github/scripts/prune_test_releases.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.REMOTE_TOKEN }}
 
       - name: Push Test -- Render Template
         run: |
@@ -545,14 +551,14 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Shellcheck -- Install Template Requirements
-        run: |
-          source ./template/.github/scripts/requirements.sh
-
       - name: Shellcheck -- Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Shellcheck -- Install Template Requirements
+        run: |
+          source ./template/.github/scripts/requirements.sh
 
       - name: Shellcheck -- Render Template
         run: |
@@ -600,14 +606,14 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Toml Lint -- Install Template Requirements
-        run: |
-          source ./template/.github/scripts/requirements.sh
-
       - name: Toml Lint -- Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Toml Lint -- Install Template Requirements
+        run: |
+          source ./template/.github/scripts/requirements.sh
 
       - name: Toml Lint -- Render Template
         run: |
@@ -651,14 +657,14 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Yaml Lint Test-- Install Template Requirements
-        run: |
-          source ./template/.github/scripts/requirements.sh
-
       - name: Yaml Lint Test -- Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Yaml Lint Test-- Install Template Requirements
+        run: |
+          source ./template/.github/scripts/requirements.sh
 
       - name: Yaml Lint Test -- Render Template
         run: |

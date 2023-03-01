@@ -9,7 +9,7 @@ set -eo pipefail
 
 main () {
 
-  pip install cookiecutter poetry
+  python -m pip install cookiecutter poetry --verbose
 
 }
 

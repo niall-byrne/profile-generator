@@ -81,14 +81,14 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Ansible Lint -- Install Poetry
-        run: |
-          source .github/scripts/poetry.sh
-
       - name: Ansible Lint -- Set up Python ${{ env.PYTHON_VERSION }}
         uses: {% endraw %}{{ cookiecutter._GITHUB_ACTION_PYTHON }}{% raw %}
         with:
           python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Ansible Lint -- Install Poetry
+        run: |
+          source .github/scripts/poetry.sh "install-poetry"
 
       - name: Ansible Lint -- Initialize Cache Locations
         run: |
@@ -111,7 +111,7 @@ jobs:
 
       - name: Ansible Lint -- Install Requirements
         run: |
-          poetry install
+          source .github/scripts/poetry.sh "install-project"
 
       - name: Ansible Lint -- Install Ansible Galaxy Dependencies
         run: |
@@ -163,7 +163,7 @@ jobs:
       - name: Create Release -- Install poetry
         if: steps.filter.outputs.release_candidate == 'TRUE'
         run: |
-          source ./.github/scripts/poetry.sh
+          source ./.github/scripts/poetry.sh "install-poetry"
 
       - name: Create Release -- Check 'pyproject.toml' Matches Tag
         if: steps.filter.outputs.release_candidate == 'TRUE'

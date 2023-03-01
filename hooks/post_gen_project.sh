@@ -35,7 +35,7 @@ initialize_git() {
 initialize_poetry() {
 
   if [[ "${PROFILE_GENERATOR_SKIP_POETRY}" != "1" ]]; then
-    poetry install
+    poetry install --verbose
   fi
 
 }
