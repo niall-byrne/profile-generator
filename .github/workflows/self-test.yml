@@ -124,8 +124,6 @@ jobs:
       - name: Ansible Lint -- Render Template
         run: |
           source ./template/.github/scripts/template.sh
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
       - name: Ansible Lint -- Lint Rendered Template
         run: |
@@ -292,8 +290,6 @@ jobs:
       - name: Documentation Test -- Render Template
         run: |
           source ./template/.github/scripts/template.sh
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
       - name: Documentation Test -- Check Markdown Links For Template
         uses: gaurav-nelson/github-action-markdown-link-check@v1
@@ -383,7 +379,6 @@ jobs:
           source ./template/.github/scripts/template.sh "${SELECTION_TOML}" "GitHub Action" "action@github.com"
         env:
           SELECTION_TOML: ${{ matrix.cookiecutter-toml-selection }}
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
       - name: Pre-Commit Test -- Test Ansible Lint -- Expect Failure
         run: |
@@ -581,8 +576,6 @@ jobs:
       - name: Shellcheck -- Render Template
         run: |
           source ./template/.github/scripts/template.sh
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
       - name: Shellcheck -- Shellcheck Scripts
         run: |
@@ -638,8 +631,6 @@ jobs:
       - name: Toml Lint -- Render Template
         run: |
           source ./template/.github/scripts/template.sh
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
       - name: Toml Lint -- Run Linter
         run: |
@@ -693,7 +684,6 @@ jobs:
           source ./template/.github/scripts/template.sh "${SELECTION_TOML}"
         env:
           SELECTION_TOML: ${{ matrix.cookiecutter-toml-selection }}
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
       - name: Yaml Lint Test -- Lint Template GitHub Workflows
         uses: ibiqlik/action-yamllint@v3
