@@ -4,8 +4,8 @@
 # Creates symlinks for attaching an external cache folder for Ansible.
 # Separate folders for Roles, and Collections are maintained.
 
-# 1: The absolute path of the mount point of the external cache folder.
-# 2: The absolute path of the usage point of the cache on the system.
+# 1:  The absolute path of the mount point of the external cache folder.
+# 2:  The absolute path of the usage point of the cache on the system.
 
 # CI only script
 

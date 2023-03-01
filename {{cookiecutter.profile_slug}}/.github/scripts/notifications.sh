@@ -3,9 +3,9 @@
 # .github/scripts/notifications.sh
 # Sends a notification to slack.
 
-# 1: The branch information to display.
-# 2: The notification message to send.
-# WEBHOOK_URL: The slack webhook url to use.
+# 1:            The branch information to display.
+# 2:            The notification message to send.
+# WEBHOOK_URL:  The slack webhook url to use.
 
 # CI only script.
 
