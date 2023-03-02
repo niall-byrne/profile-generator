@@ -1,0 +1,8 @@
+{
+  "ci_extra_release_content": [
+    "## Customizable Text.",
+    "This message is appended to the changelog of your GitHub release."
+  ],
+  "ci_trufflehog_extra_scan_args": "",
+  "ci_verbose_notifications": {{ cookiecutter._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS | tojson }}
+}

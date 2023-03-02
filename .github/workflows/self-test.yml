@@ -12,29 +12,20 @@ on:
     - cron: "0 6 * * 1"
   workflow_dispatch:
 
-env:
-  PROJECT_NAME: "profile-generator"
-  PROFILE_GENERATOR_BRANCH_NAME_BASE: "master"
-  PROFILE_GENERATOR_BRANCH_NAME_DEVELOPMENT: "dev"
-  PYTHON_KEYRING_BACKEND: "keyring.backends.fail.Keyring"
-  TEMPLATED_NAME: "profile-example"
-  USER_NAME: "osx-provisioner"
-  VERBOSE_NOTIFICATIONS: 0
-
 jobs:
 
   _create_configuration:
 
     runs-on: ubuntu-latest
     outputs:
-      configuration: ${{ steps.read_configuration.outputs.configuration }}
+      configuration: ${{ steps.configuration.outputs.configuration }}
 
     steps:
       - name: Create Configuration -- Checkout Repository
         uses: actions/checkout@v3
 
       - name: Create Configuration -- Set Cookiecutter Configuration as Output
-        id: read_configuration
+        id: configuration
         run: |
           {
             echo "configuration<<EOF"
@@ -52,7 +43,7 @@ jobs:
 
       - name: Start -- Setup Environment
         run: |
-          source ./{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+          source ./.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
@@ -76,7 +67,7 @@ jobs:
 
       - name: Success -- Setup Environment
         run: |
-          source ./{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+          source ./.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
@@ -107,7 +98,7 @@ jobs:
 
       - name: Ansible Lint -- Setup Environment
         run: |
-          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+          source ./template/.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
@@ -149,7 +140,7 @@ jobs:
           poetry run ansible-lint
 
       - name: Ansible Lint -- Report Job Status on Success
-        if: env.VERBOSE_NOTIFICATIONS == '1'
+        if: fromJSON(needs._create_configuration.outputs.configuration)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: ansible linting checks succeeded!"
 
@@ -176,7 +167,7 @@ jobs:
 
       - name: Apply Profile -- Setup Environment
         run: |
-          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+          source ./template/.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
@@ -201,7 +192,7 @@ jobs:
           PLATFORM_VERSION: ${{ matrix.platform }}
 
       - name: Apply Profile -- Report Job Status (Success)
-        if: env.VERBOSE_NOTIFICATIONS == '1'
+        if: fromJSON(needs._create_configuration.outputs.configuration)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: OSX ${{ matrix.os }}, profile application was successful"
 
@@ -232,7 +223,7 @@ jobs:
       - name: Create Release -- Setup Environment
         if: steps.filter.outputs.release_candidate == 'TRUE'
         run: |
-          source ./{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+          source ./.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
@@ -294,7 +285,7 @@ jobs:
 
       - name: Documentation Test -- Setup Environment
         run: |
-          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+          source ./template/.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
@@ -314,7 +305,7 @@ jobs:
       - name: Documentation Test -- Check Markdown Links For Template
         uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
-          config-file: 'template/{{cookiecutter.profile_slug}}/.github/config/markdown.link.check.json'
+          config-file: 'template/{{cookiecutter.profile_slug}}/.github/config/actions/gaurav-nelson-github-action-markdown-link-check.json'
           use-quiet-mode: 'no'
           use-verbose-mode: 'yes'
           folder-path: 'template, template/.github/workflows'
@@ -323,14 +314,14 @@ jobs:
       - name: Documentation Test -- Check Markdown Links For Rendered Template
         uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
-          config-file: 'template/{{cookiecutter.profile_slug}}/.github/config/markdown.link.check.json'
+          config-file: 'template/{{cookiecutter.profile_slug}}/.github/config/actions/gaurav-nelson-github-action-markdown-link-check.json'
           use-quiet-mode: 'no'
           use-verbose-mode: 'yes'
           folder-path: ${{ env.TEMPLATED_NAME }}
           max-depth: -1
 
       - name: Documentation Test -- Report Job Status on Success
-        if: env.VERBOSE_NOTIFICATIONS == '1'
+        if: fromJSON(needs._create_configuration.outputs.configuration)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: documentation checks succeeded!"
 
@@ -359,7 +350,7 @@ jobs:
 
       - name: Pre-Commit Test -- Setup Environment
         run: |
-          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+          source ./template/.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
@@ -420,7 +411,7 @@ jobs:
           source ./template/.github/scripts/test_precommit.sh "toml-lint-2"
 
       - name: Pre-Commit Test -- Report Job Status on Success
-        if: env.VERBOSE_NOTIFICATIONS == '1'
+        if: fromJSON(needs._create_configuration.outputs.configuration)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: pre-commit hook test has passed!"
 
@@ -451,7 +442,7 @@ jobs:
 
       - name: Push Test -- Setup Environment
         run: |
-          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+          source ./template/.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
@@ -509,7 +500,7 @@ jobs:
           REMOTE_ORIGIN: ${{ secrets.REMOTE_ORIGIN }}
 
       - name: Push Test -- Report Job Status on Success
-        if: env.VERBOSE_NOTIFICATIONS == '1'
+        if: fromJSON(needs._create_configuration.outputs.configuration)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: push has been triggered!"
 
@@ -519,6 +510,7 @@ jobs:
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: push failed to trigger!"
 
   security_test_repo:
+    needs: [_create_configuration]
 
     runs-on: ubuntu-latest
 
@@ -530,7 +522,7 @@ jobs:
 
       - name: Security Test Repo -- Setup Environment
         run: |
-          source ./{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+          source ./.github/scripts/setup.sh
           source ./{{cookiecutter.profile_slug}}/.github/scripts/pushed_commit_range.sh
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
@@ -544,7 +536,7 @@ jobs:
           head: ${{ env.BRANCH_OR_TAG }}
 
       - name: Security Test Repo -- Report Job Status on Success
-        if: env.VERBOSE_NOTIFICATIONS == '1'
+        if: fromJSON(needs._create_configuration.outputs.configuration)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
           ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: repo security checks succeeded!"
 
@@ -569,7 +561,7 @@ jobs:
 
       - name: Shellcheck -- Setup Environment
         run: |
-          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+          source ./template/.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
@@ -599,7 +591,7 @@ jobs:
           shellcheck -x ./.pre-commit/*.sh
 
       - name: Shellcheck -- Report Job Status on Success
-        if: env.VERBOSE_NOTIFICATIONS == '1'
+        if: fromJSON(needs._create_configuration.outputs.configuration)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: shellcheck checks succeeded!"
 
@@ -624,7 +616,7 @@ jobs:
 
       - name: Toml Lint -- Setup Environment
         run: |
-          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+          source ./template/.github/scripts/setup.sh
           sudo apt-get install -y golang-github-pelletier-go-toml
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
@@ -655,7 +647,7 @@ jobs:
           git diff --exit-code
 
       - name: Toml Lint -- Report Job Status (Success)
-        if: env.VERBOSE_NOTIFICATIONS == '1'
+        if: fromJSON(needs._create_configuration.outputs.configuration)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: toml linting was successful!"
 
@@ -683,7 +675,7 @@ jobs:
 
       - name: Yaml Lint Test -- Setup Environment
         run: |
-          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/setup.sh
+          source ./template/.github/scripts/setup.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
@@ -724,7 +716,7 @@ jobs:
           config_file: ./${{ env.TEMPLATED_NAME }}/profile/.yamllint.yml
 
       - name: Yaml Lint Test -- Report Job Status on Success
-        if: env.VERBOSE_NOTIFICATIONS == '1'
+        if: fromJSON(needs._create_configuration.outputs.configuration)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: YAML linting checks succeeded!"
 
