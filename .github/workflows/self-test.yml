@@ -642,7 +642,13 @@ jobs:
         run: |
           source ./template/.github/scripts/template.sh
 
-      - name: Toml Lint -- Run Linter
+      - name: Toml Lint -- Run Linter (Template)
+        run: |
+          cd template
+          find . -type f -name "*.toml" -exec tomll "{}" \;
+          git diff --exit-code
+
+      - name: Toml Lint -- Run Linter (Rendered Template)
         run: |
           cd "${TEMPLATED_NAME}"
           find . -type f -name "*.toml" -exec tomll "{}" \;
