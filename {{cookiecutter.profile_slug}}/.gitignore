@@ -1,8 +1,10 @@
+*.retry
 .ansible
 .cache
 .idea
 .tool-versions
 poetry.lock
+profile/*.retry
 profile/.mac_maker
 profile/collections
 profile/env
