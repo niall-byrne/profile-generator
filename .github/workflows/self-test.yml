@@ -13,17 +13,34 @@ on:
   workflow_dispatch:
 
 env:
-  MAC_MAKER_VERSION:  "0.0.6"
   PROJECT_NAME: "profile-generator"
   PROFILE_GENERATOR_BRANCH_NAME_BASE: "master"
   PROFILE_GENERATOR_BRANCH_NAME_DEVELOPMENT: "dev"
   PYTHON_KEYRING_BACKEND: "keyring.backends.fail.Keyring"
-  PYTHON_VERSION: "3.9"
   TEMPLATED_NAME: "profile-example"
   USER_NAME: "osx-provisioner"
   VERBOSE_NOTIFICATIONS: 0
 
 jobs:
+
+  _create_configuration:
+
+    runs-on: ubuntu-latest
+    outputs:
+      configuration: ${{ steps.read_configuration.outputs.configuration }}
+
+    steps:
+      - name: Create Configuration -- Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Create Configuration -- Set Cookiecutter Configuration as Output
+        id: read_configuration
+        run: |
+          {
+            echo "configuration<<EOF"
+              cat cookiecutter.json
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
   _start_notification:
 
@@ -73,6 +90,7 @@ jobs:
           ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: error reporting job status!"
 
   ansible_lint_test:
+    needs: [_create_configuration]
 
     runs-on: ubuntu-latest
     env:
@@ -93,10 +111,10 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Ansible Lint -- Set up Python ${{ env.PYTHON_VERSION }}
+      - name: Ansible Lint -- Set up Python ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
 
       - name: Ansible Lint -- Install Template Requirements
         run: |
@@ -141,7 +159,7 @@ jobs:
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: ansible linting checks failed!"
 
   apply_profile_test:
-    needs: [push_repository_test]
+    needs: [_create_configuration, push_repository_test]
 
     runs-on: macos-${{ matrix.os }}
     strategy:
@@ -178,6 +196,7 @@ jobs:
         run: |
           source ./template/.github/scripts/apply.sh
         env:
+          MAC_MAKER_VERSION: ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_MIN_VERSION }}
           OS_VERSION: ${{ matrix.os }}
           PLATFORM_VERSION: ${{ matrix.platform }}
 
@@ -259,6 +278,7 @@ jobs:
           ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: automated release creation has failed!"
 
   documentation_test:
+    needs: [_create_configuration]
 
     runs-on: ubuntu-latest
     env:
@@ -278,10 +298,10 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Documentation Test -- Set up Python ${{ env.PYTHON_VERSION }}
+      - name: Documentation Test -- Set up Python ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
 
       - name: Documentation Test -- Install Template Requirements
         run: |
@@ -320,6 +340,7 @@ jobs:
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: documentation checks failed!"
 
   precommit_test:
+    needs: [_create_configuration]
 
     runs-on: ubuntu-latest
     env:
@@ -342,10 +363,10 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Pre-Commit Test -- Set up Python ${{ env.PYTHON_VERSION }}
+      - name: Pre-Commit Test -- Set up Python ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
 
       - name: Pre-Commit Test -- Install Template Requirements
         run: |
@@ -409,7 +430,7 @@ jobs:
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: pre-commit hook test has failed!"
 
   push_repository_test:
-    needs: [_start_notification, ansible_lint_test, documentation_test, precommit_test, security_test_repo, shellcheck_test, toml_lint_test, yaml_lint_test]
+    needs: [_create_configuration, _start_notification, ansible_lint_test, documentation_test, precommit_test, security_test_repo, shellcheck_test, toml_lint_test, yaml_lint_test]
 
     runs-on: ubuntu-latest
     env:
@@ -434,10 +455,10 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Push Test -- Set up Python ${{ env.PYTHON_VERSION }}
+      - name: Push Test -- Set up Python ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
 
       - name: Push Test -- Install Template Requirements
         run: |
@@ -533,6 +554,7 @@ jobs:
           ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: repo security checks failed!"
 
   shellcheck_test:
+    needs: [_create_configuration]
 
     runs-on: ubuntu-latest
     env:
@@ -551,10 +573,10 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Shellcheck -- Set up Python ${{ env.PYTHON_VERSION }}
+      - name: Shellcheck -- Set up Python ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
 
       - name: Shellcheck -- Install Template Requirements
         run: |
@@ -587,6 +609,7 @@ jobs:
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: shellcheck checks failed!"
 
   toml_lint_test:
+    needs: [_create_configuration]
 
     runs-on: ubuntu-latest
     env:
@@ -606,10 +629,10 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Toml Lint -- Set up Python ${{ env.PYTHON_VERSION }}
+      - name: Toml Lint -- Set up Python ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
 
       - name: Toml Lint -- Install Template Requirements
         run: |
@@ -636,6 +659,7 @@ jobs:
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: toml linting has failed!"
 
   yaml_lint_test:
+    needs: [_create_configuration]
 
     runs-on: ubuntu-latest
     env:
@@ -657,10 +681,10 @@ jobs:
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 
-      - name: Yaml Lint Test -- Set up Python ${{ env.PYTHON_VERSION }}
+      - name: Yaml Lint Test -- Set up Python ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
 
       - name: Yaml Lint Test-- Install Template Requirements
         run: |
