@@ -1,0 +1,9 @@
+(A|a)nsible
+(API|api)
+(CLI|cli)
+commitizen
+(D|d)ev
+(P|p)recheck
+tomll
+yamllint
+(yaml|YAML)

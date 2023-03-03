@@ -1,9 +1,11 @@
 # {{cookiecutter.project_slug}}
 
-### {{ cookiecutter._BRANCH_NAME_BASE | capitalize }} Branch CI:
+(Powered by [CICD-Tools](https://github.com/cicd-tools-org/cicd-tools).)
+
+### {{ cookiecutter._BRANCH_NAME_BASE | capitalize }} Branch CI
 - [![{{cookiecutter.project_slug}}](https://github.com/{{cookiecutter.github_handle}}/{{cookiecutter.project_slug}}/actions/workflows/workflow-push.yml/badge.svg?branch={{ cookiecutter._BRANCH_NAME_BASE }})](https://github.com/{{cookiecutter.github_handle}}/{{cookiecutter.project_slug}}/actions/workflows/workflow-push.yml)
 
-### {{ cookiecutter._BRANCH_NAME_DEVELOPMENT | capitalize }} Branch CI:
+### {{ cookiecutter._BRANCH_NAME_DEVELOPMENT | capitalize }} Branch CI
 - [![{{cookiecutter.project_slug}}](https://github.com/{{cookiecutter.github_handle}}/{{cookiecutter.project_slug}}/actions/workflows/workflow-push.yml/badge.svg?branch={{ cookiecutter._BRANCH_NAME_DEVELOPMENT }})](https://github.com/{{cookiecutter.github_handle}}/{{cookiecutter.project_slug}}/actions/workflows/workflow-push.yml)
 
 ## Mac Maker Profile
@@ -29,6 +31,14 @@ Extend this further by mixing and matching Ansible roles in the [profile/install
 - To get the most out of your ClamAV install, make sure you grant it "Full Disk Access".
 - Please take a quick look at the documentation [here](https://github.com/osx-provisioner/role-clamav).
 
+## Development Requirements
+
+An OSX machine is of course the best platform to development your profile on, although you could probably use a Linux or BSD machine in a pinch.
+
+You'll need [Python](https://www.python.org/) **3.9** or later, and a container runtime environment such as [Docker](https://www.docker.com/) or [Colima](https://github.com/abiosoft/colima) is strongly recommended.
+
+Please see the complete template guide [here](https://github.com/osx-provisioner/profile-generator/blob/master/README.md#requirements).
+
 ## This Looks Complicated, How Can I Customize It?
 
 Start [here](./profile/vars/main.yml), it's really much simpler than you might think.
@@ -37,7 +47,7 @@ Start [here](./profile/vars/main.yml), it's really much simpler than you might t
 
 To start branching out, and really customizing things, get familiar with the following files:
 
- - [install.yml](profile/install.yml)           
+ - [install.yml](profile/install.yml)
    - This is the main [ansible](https://ansible.com) playbook that will be run when you "Apply" this profile.
  - [requirements.yml](profile/requirements.yml)
    - This is configuration for [ansible-galaxy](https://galaxy.ansible.com/docs/using/installing.html#installing-multiple-roles-from-a-file) dependencies.
@@ -51,30 +61,30 @@ The more customized your want your profile to become, the more you'll benefit fr
 There some configuration files you can fine tune as you see fit:
 
  - [.ansible-lint](profile/.ansible-lint)
-   - This is configuration for [ansible-lint](https://ansible-lint.readthedocs.io/en/latest/), which is used in the included GitHub CI pipeline.
- - [.yamllint.yml](profile/.yamllint.yml)               
-   - This is configuration for [yamllint](https://yamllint.readthedocs.io/en/stable/), which is used in the included GitHub CI pipeline.
+   - This is configuration for [ansible-lint](https://ansible-lint.readthedocs.io/), which is used in the included GitHub CI pipeline.
+ - [.yamllint.yml](profile/.yamllint.yml)
+   - This is configuration for [yamllint](https://yamllint.readthedocs.io/), which is used in the included GitHub CI pipeline.
 
 ## Profile Precheck Folder
 
-The `profile` folder contains a special [__precheck__](profile/__precheck__) sub-folder with configuration used by [Mac Maker](https://github.com/osx-provisioner/mac_maker) to help end users apply the Profile to their machines.
+The `profile` folder contains a special [\_\_precheck\_\_](profile/__precheck__) sub-folder with configuration used by [Mac Maker](https://github.com/osx-provisioner/mac_maker) to help end users apply the Profile to their machines.
 
 Please read the [Mac Maker Profile](https://mac-maker.readthedocs.io/en/latest/project/3.profiles.html) documentation for details on this. (It's a quick read.)
 
 ## Developing Your Profile
 
-[Mac Maker](https://github.com/osx-provisioner/mac_maker) can work with **public** GitHub repositories, or with privately maintained `spec.json` files.
+[Mac Maker](https://github.com/osx-provisioner/mac_maker) can work with _public_ GitHub repositories, or with privately maintained `spec.json` files.
 
 The Profile has a specific directory structure, but the `spec.json` file lets you mix and match where the directories and files are. It's a bit inflexible in certain ways, because it requires absolute paths, but this makes it ideal to work off a USB stick or any portable media.
 When developing your profile locally, it's handy to setup a `spec.json` file that points to all the locations you need, so you can run Mac Maker to test.
 
-(A common use case for `spec.json` files, is to clone a **private** git repository to a USB key, and configure the `spec.json` to point to the USB key locations.)
+(A common use case for `spec.json` files, is to clone a _private_ git repository to a USB key, and configure the `spec.json` to point to the USB key locations.)
 
 Please read the [Mac Maker Job Spec](https://mac-maker.readthedocs.io/en/latest/project/4.spec_files.html) documentation for details on this. (It's a quick read.)
 
 ## Securing Your Profile
 
-Take care not to check in any privileged content such as passwords, or api keys to your profile.  This is especially true if you're working with a **public** GitHub repository. 
+Take care not to check in any privileged content such as passwords, or api keys to your profile.  This is especially true if you're working with a _public_ GitHub repository.
 
 ### Environment Variables
 
@@ -85,18 +95,21 @@ Take care not to check in any privileged content such as passwords, or api keys 
 #### Using Environment Variables in Practice
 
 In practice this might mean keeping a small shell script that sets variables somewhere safe (such as an encrypted USB key):
+
 ```shell
 #!/bin/bash
 export MY_SECRET_VALUE="very secret"
 ```
 
 Before applying your profile, you would insert your USB key and source your shell script:
-```
+
+```shell
 $ source /Volumes/USB/my_secret_script.sh
 $ ./mac_maker
 ```
- 
+
 Your environment variables will then be accessible inside Ansible configuration:
+
 ```yaml
 ---
 - name: Read My Secret
@@ -120,34 +133,31 @@ Poetry is leveraged to manage the Python dependencies:
 
 You can also conveniently execute commands inside the Python virtual environment by using: `poetry run [my command here]`
 
-## Pre-Commit
+## Pre-Commit Git Hooks
 
-The Python library [pre-commit](https://pre-commit.com/) comes installed with a few useful initial hooks:
+The python library [pre-commit](https://pre-commit.com/) is installed during templating with a few useful initial hooks.
 
-### Default Pre-Commit Hooks:
-| Hook Name          | Description                                                                                                  |
-| ------------------ | ------------------------------------------------------------------------------------------------------------ |
-| ansible-lint       | Checks your profile for best Ansible practices and behaviour.                                                |
-| commitizen         | Runs [commitizen](https://commitizen-tools.github.io/commitizen/) on your commit message to validate it.     |
-| pyproject.toml     | Optionally runs [tomll](https://github.com/pelletier/go-toml) on your TOML configuration file.               |
+**This hooks depend on the presence of a container runtime such as [Docker](https://www.docker.com/) or [Colima](https://github.com/abiosoft/colima) on your development machine.**
+
+Complete documentation on these hooks can be found [here](https://github.com/osx-provisioner/profile-generator/blob/master/README.md#pre-commit-git-hooks).
 
 ## Restricted Paths
 
-Certain versions of the Ansible tool chain *may* use these folders, which you would be best to avoid:
+Certain versions of the Ansible tool chain _may_ use these folders, which you would be best to avoid:
 - .ansible/
 - .cache/
 - profile/.ansible/
 - profile/.cache/
 
 Mac Maker itself also writes some data overtop of the role (ephemerally at run time) in order to process it, this means there are a few paths that you should shy away from using:
-- spec.json **\***
+- spec.json _\*_
 - profile/.mac_maker/
-- profile/collections/ **\***
-- profile/env/ **\***
-- profile/inventory/ **\***
-- profile/roles/ **\***
+- profile/collections/ _\*_
+- profile/env/ _\*_
+- profile/inventory/ _\*_
+- profile/roles/ _\*_
   
-**\*** **(these paths are marked for deprecation, soon freeing them up for use)**
+_\*_ _(these paths are marked for deprecation, soon freeing them up for use)_
 
 ## Default License
 
