@@ -328,45 +328,7 @@ jobs:
 
   {%- endif %}{% raw %}
 
-  yaml_lint_test:
-    needs: [configuration]
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Yaml Lint Test -- Checkout Repository
-        uses: {% endraw %}{{ cookiecutter._GITHUB_ACTION_CHECKOUT }}{% raw %}
-
-      - name: Yaml Lint Test -- Setup Environment
-        run: |
-          source ./.github/scripts/setup.sh
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-
-      - name: Yaml Lint Test -- Run Linter on GitHub Workflows
-        uses: {% endraw %}{{ cookiecutter._GITHUB_ACTION_YAMLLINT }}{% raw %}
-        with:
-          format: standard
-          file_or_dir: ./.github/workflows
-          config_file: ./profile/.yamllint.yml
-
-      - name: Yaml Lint Test -- Run Linter on Top Level Configurations
-        uses: {% endraw %}{{ cookiecutter._GITHUB_ACTION_YAMLLINT }}{% raw %}
-        with:
-          format: standard
-          file_or_dir: .pre-commit-config.yaml mac_maker.yml
-          config_file: ./profile/.yamllint.yml
-
-      - name: Yaml Lint Test -- Report Job Status (Success)
-        if: fromJSON(needs.configuration.outputs.configuration).ci_verbose_notifications == true
-        run: |
-          ./.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: YAML linting was successful!"
-
-      - name: Yaml Lint Test -- Report Job Status (Failure)
-        if: failure()
-        run: |
-          ./.github/scripts/notifications.sh "${NOTIFICATION}" ":x: YAML linting has failed!"
-{% endraw %}
+  {%- endraw %}
 
   commit_lint_test:
     needs: [configuration]
@@ -374,5 +336,12 @@ jobs:
     with:
       COMMITIZEN_REV_RANGE: {% raw %}${{ fromJSON(needs.configuration.outputs.configuration).ci_commitzen_rev_range }}{% endraw %}
       PYTHON_VERSION: {% raw %}${{ needs.configuration.outputs.python-version }}{% endraw %}
+      VERBOSITY: {% raw %}${{ fromJSON(needs.configuration.outputs.configuration).ci_verbose_notifications }}{% endraw %}
+    secrets: inherit
+
+  yaml_lint_test:
+    needs: [configuration]
+    uses: ./.github/workflows/.job-80-yaml-lint.yml
+    with:
       VERBOSITY: {% raw %}${{ fromJSON(needs.configuration.outputs.configuration).ci_verbose_notifications }}{% endraw %}
     secrets: inherit
