@@ -266,66 +266,10 @@ jobs:
 
   documentation_test:
     needs: [_create_configuration]
-
-    runs-on: ubuntu-latest
-    env:
-      PROFILE_GENERATOR_SKIP_POETRY: 1
-      PROFILE_GENERATOR_SKIP_PRECOMMIT: 1
-
-    steps:
-
-      - name: Documentation Test -- Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          path: 'template'
-
-      - name: Documentation Test -- Setup Environment
-        run: |
-          source ./template/.github/scripts/setup.sh
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-
-      - name: Documentation Test -- Set up Python ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
-
-      - name: Documentation Test -- Install Template Requirements
-        run: |
-          source ./template/.github/scripts/requirements.sh
-
-      - name: Documentation Test -- Render Template
-        run: |
-          source ./template/.github/scripts/template.sh
-
-      - name: Documentation Test -- Check Markdown Links For Template
-        uses: gaurav-nelson/github-action-markdown-link-check@v1
-        with:
-          config-file: 'template/{{cookiecutter.profile_slug}}/.github/config/actions/gaurav-nelson-github-action-markdown-link-check.json'
-          use-quiet-mode: 'no'
-          use-verbose-mode: 'yes'
-          folder-path: 'template, template/.github/workflows'
-          max-depth: 1
-
-      - name: Documentation Test -- Check Markdown Links For Rendered Template
-        uses: gaurav-nelson/github-action-markdown-link-check@v1
-        with:
-          config-file: 'template/{{cookiecutter.profile_slug}}/.github/config/actions/gaurav-nelson-github-action-markdown-link-check.json'
-          use-quiet-mode: 'no'
-          use-verbose-mode: 'yes'
-          folder-path: ${{ env.TEMPLATED_NAME }}
-          max-depth: -1
-
-      - name: Documentation Test -- Report Job Status on Success
-        if: fromJSON(needs._create_configuration.outputs.configuration)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
-        run: |
-          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: documentation checks succeeded!"
-
-      - name: Documentation Test -- Report Job Status on Failure
-        if: failure()
-        run: |
-          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: documentation checks failed!"
-
+    uses: ./.github/workflows/.job-30-documentation.yml
+    with:
+      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+    secrets: inherit
 
   security_test_repo:
     needs: [_create_configuration]
