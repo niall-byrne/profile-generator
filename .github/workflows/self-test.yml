@@ -145,68 +145,16 @@ jobs:
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: ansible linting checks failed!"
 
-  apply_profile_test:
-    needs: [_create_configuration, push_repository_test]
-
-    runs-on: macos-${{ matrix.os }}
-    strategy:
-      max-parallel: 4
-      matrix:
-        os: [12]
-        platform: [x86_64]
-
-    steps:
-      - name: Apply Profile -- Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          path: 'template'
-
-      - name: Apply Profile -- Setup Environment
-        run: |
-          source ./template/.github/scripts/setup.sh
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-
-      - name: Apply Profile -- Initialize Cache Locations
-        run: |
-          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/ansible_cache.sh  \
-            "$(pwd)/ansible_cache"                                                          \
-            "$(pwd)/installer.workspace/${TEMPLATED_NAME}-${PROFILE_GENERATOR_BRANCH_NAME_BASE}/profile"
-
-      - name: Apply Profile -- Mount Ansible Cache
-        uses: actions/cache@v3
-        with:
-          key: ansible-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/profile/requirements.yml') }}-${{ env.CACHE_TTL }}
-          path: ansible_cache
-
-      - name: Apply Profile -- Apply Pushed Profile
-        run: |
-          source ./template/.github/scripts/apply.sh
-        env:
-          MAC_MAKER_VERSION: ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_MIN_VERSION }}
-          OS_VERSION: ${{ matrix.os }}
-          PLATFORM_VERSION: ${{ matrix.platform }}
-
-      - name: Apply Profile -- Report Job Status (Success)
-        if: fromJSON(needs._create_configuration.outputs.configuration)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
-        run: |
-          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: OSX ${{ matrix.os }}, profile application was successful"
-
-      - name: OSX Build -- Report Job Status (Failure)
-        if: failure()
-        run: |
-          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: OSX ${{ matrix.os }}, profile application failed!"
-
-  documentation_test:
+  security_test_repo:
     needs: [_create_configuration]
-    uses: ./.github/workflows/.job-30-documentation.yml
+    uses: ./.github/workflows/.job-10-security.yml
     with:
       CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
     secrets: inherit
 
-  security_test_repo:
+  documentation_test:
     needs: [_create_configuration]
-    uses: ./.github/workflows/.job-10-security.yml
+    uses: ./.github/workflows/.job-30-documentation.yml
     with:
       CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
     secrets: inherit
@@ -253,8 +201,15 @@ jobs:
       CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
     secrets: inherit
 
+  mac_maker_test:
+    needs: [_create_configuration, push_repository_test]
+    uses: ./.github/workflows/.job-95-mac-maker.yml
+    with:
+      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+    secrets: inherit
+
   create_release:
-    needs: [_create_configuration, apply_profile_test]
+    needs: [_create_configuration, mac_maker_test]
     uses: ./.github/workflows/.job-99-create-release.yml
     with:
       CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}

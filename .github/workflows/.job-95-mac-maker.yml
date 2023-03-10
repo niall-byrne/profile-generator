@@ -1,0 +1,68 @@
+---
+name: profile-generator-job-mac-maker-test
+
+on:
+  workflow_call:
+    inputs:
+      CONFIGURATION:
+        description: "The 'cookiecutter.json' file as a configuration object."
+        required: true
+        type: string
+    secrets:
+      SLACK_WEBHOOK:
+        description: "Optional, enables Slack notifications."
+        required: false
+
+jobs:
+
+  apply_profile:
+
+    runs-on: macos-${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        architecture: ${{ fromJSON(inputs.CONFIGURATION)._GITHUB_CI_TEMPLATE_TEST_ARCHITECTURES }}
+        os: ${{ fromJSON(inputs.CONFIGURATION)._GITHUB_CI_TEMPLATE_TEST_OSX_VERSIONS }}
+      max-parallel: ${{ fromJSON(inputs.CONFIGURATION)._GITHUB_CI_DEFAULT_CONCURRENCY }}
+
+    steps:
+      - name: Apply Profile -- Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          path: 'template'
+
+      - name: Apply Profile -- Setup Environment
+        run: |
+          source "./template/.github/scripts/setup.sh"
+        env:
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Apply Profile -- Initialize Cache Locations
+        run: |
+          source "./template/{{cookiecutter.profile_slug}}/.github/scripts/ansible_cache.sh"  \
+            "$(pwd)/ansible_cache"                                                            \
+            "$(pwd)/installer.workspace/${TEMPLATED_NAME}-${PROFILE_GENERATOR_BRANCH_NAME_BASE}/profile"
+
+      - name: Apply Profile -- Mount Ansible Cache
+        uses: actions/cache@v3
+        with:
+          key: ansible-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/profile/requirements.yml') }}-${{ env.CACHE_TTL }}
+          path: ansible_cache
+
+      - name: Apply Profile -- Apply Pushed Profile
+        run: |
+          source "./template/.github/scripts/job-95-mac-maker.sh"
+        env:
+          ARCHITECTURE: ${{ matrix.architecture }}
+          MAC_MAKER_VERSION: ${{ fromJson(inputs.CONFIGURATION)._MAC_MAKER_MIN_VERSION }}
+          OS_VERSION: ${{ matrix.os }}
+
+      - name: Apply Profile -- Report Job Status (Success)
+        if: fromJSON(inputs.CONFIGURATION)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
+        run: |
+          "./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh" "${NOTIFICATION}" ":white_check_mark: OSX ${{ matrix.os }}, profile application was successful"
+
+      - name: OSX Build -- Report Job Status (Failure)
+        if: failure()
+        run: |
+          "./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh" "${NOTIFICATION}" ":x: OSX ${{ matrix.os }}, profile application failed!"
