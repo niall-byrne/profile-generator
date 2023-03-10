@@ -12,6 +12,7 @@ on:
 
 env:
   PYTHON_VERSION: "{{ cookiecutter._MAC_MAKER_PYTHON_VERSION }}"
+  MAC_MAKER_PYTHON_VERSION: "{{ cookiecutter._MAC_MAKER_PYTHON_VERSION }}"
 
 {% raw %}
 jobs:
@@ -21,6 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       configuration: ${{ steps.configuration.outputs.value }}
+      python-version: ${{ steps.python-version.outputs.value }}
 
     steps:
       - name: Create Configuration -- Checkout Repository
@@ -34,6 +36,11 @@ jobs:
         id: configuration
         run: |
           source .github/scripts/workflow-set-value.sh cat .github/config/workflows/push.json
+
+      - name: Create Configuration -- Set the Mac Maker Python Version as Output
+        id: python-version
+        run: |
+          source .github/scripts/workflow-set-value.sh echo "${MAC_MAKER_PYTHON_VERSION}"
 
   _start_notification:
 
@@ -151,7 +158,7 @@ jobs:
           ./.github/scripts/notifications.sh "${NOTIFICATION}" ":x: ansible lint checks failed!"
 
   create_release:
-    needs: {% endraw %}[configuration, _start_notification, ansible_lint, documentation_test, security_test,{% if cookiecutter.optional_toml_linting == 'true' %} toml_lint_test,{% endif %} yaml_lint_test]{% raw %}
+    needs: {% endraw %}[configuration, _start_notification, ansible_lint, commit_lint_test, documentation_test, security_test,{% if cookiecutter.optional_toml_linting == 'true' %} toml_lint_test,{% endif %} yaml_lint_test]{% raw %}
 
     runs-on: ubuntu-latest
 
@@ -360,3 +367,12 @@ jobs:
         run: |
           ./.github/scripts/notifications.sh "${NOTIFICATION}" ":x: YAML linting has failed!"
 {% endraw %}
+
+  commit_lint_test:
+    needs: [configuration]
+    uses: ./.github/workflows/.job-80-commit-lint.yml
+    with:
+      COMMITIZEN_REV_RANGE: {% raw %}${{ fromJSON(needs.configuration.outputs.configuration).ci_commitzen_rev_range }}{% endraw %}
+      PYTHON_VERSION: {% raw %}${{ needs.configuration.outputs.python-version }}{% endraw %}
+      VERBOSITY: {% raw %}${{ fromJSON(needs.configuration.outputs.configuration).ci_verbose_notifications }}{% endraw %}
+    secrets: inherit

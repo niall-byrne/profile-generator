@@ -1,0 +1,83 @@
+---
+name: {{ cookiecutter.profile_slug }}-job-commit-lint
+{% raw %}
+on:
+  workflow_call:
+    inputs:
+      COMMITIZEN_REV_RANGE:
+        description: "The range of commits commitizen will enforce."
+        required: true
+        type: string
+      PYTHON_VERSION:
+        description: "The version of Python that will be used."
+        required: true
+        type: string
+      VERBOSITY:
+        description: "Manages the types of Slack notifications."
+        required: true
+        type: boolean
+    secrets:
+      SLACK_WEBHOOK:
+        description: "Optional, enables Slack notifications."
+        required: false
+
+env:
+  PROFILE_GENERATOR_PUSH_FALLBACK_REV_RANGE: ${{ inputs.COMMITIZEN_REV_RANGE }}
+
+jobs:
+
+  run_commitizen:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Commit Lint Test -- Checkout Repository
+        uses: {% endraw %}{{ cookiecutter._GITHUB_ACTION_CHECKOUT }}{% raw %}
+        with:
+          fetch-depth: 0
+
+      - name: Commit Lint Test -- Setup Environment
+        run: |
+          source "./.github/scripts/setup.sh"
+          source "./.github/scripts/pushed_commit_range.sh"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Commit Lint Test -- Set up Python ${{ inputs.PYTHON_VERSION }}
+        uses: {% endraw %}{{ cookiecutter._GITHUB_ACTION_PYTHON }}{% raw %}
+        with:
+          python-version: ${{ inputs.PYTHON_VERSION }}
+
+      - name: Commit Lint Test -- Install Poetry
+        run: |
+          source "./.github/scripts/poetry.sh" "install-poetry"
+
+      - name: Commit Lint Test -- Initialize Cache Locations
+        run: |
+          mkdir -p ~/.cache/pypoetry/virtualenvs
+
+      - name: Commit Lint Test -- Mount Poetry Cache
+        uses: {% endraw %}{{ cookiecutter._GITHUB_ACTION_CACHE }}{% raw %}
+        with:
+          key: poetry-${{ hashFiles('./pyproject.toml') }}-${{ runner.os }}-${{ env.CACHE_TTL }}
+          path: ~/.cache/pypoetry/virtualenvs
+
+      - name: Commit Lint Test -- Install Requirements
+        run: |
+          source "./.github/scripts/poetry.sh" "install-project"
+
+      - name: Commit Lint Test -- Lint Pushed Commits
+        run: |
+          poetry run cz check --rev-range "${PUSHED_COMMIT_REV_RANGE}"
+
+      - name: Commit Lint Test -- Report Job Status on Success
+        if: inputs.VERBOSITY == true
+        run: |
+          "./.github/scripts/notifications.sh" "${NOTIFICATION}" ":white_check_mark: commit lint checks succeeded!"
+
+      - name: Commit Lint Test -- Report Job Status on Failure
+        if: failure()
+        run: |
+          "./.github/scripts/notifications.sh" "${NOTIFICATION}" ":x: commit lint checks failed!"
+{% endraw %}

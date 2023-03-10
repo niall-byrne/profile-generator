@@ -18,20 +18,16 @@ jobs:
 
     runs-on: ubuntu-latest
     outputs:
-      configuration: ${{ steps.configuration.outputs.configuration }}
+      configuration: ${{ steps.cookiecutter_configuration.outputs.value }}
 
     steps:
       - name: Create Configuration -- Checkout Repository
         uses: actions/checkout@v3
 
       - name: Create Configuration -- Set Cookiecutter Configuration as Output
-        id: configuration
+        id: cookiecutter_configuration
         run: |
-          {
-            echo "configuration<<EOF"
-              cat cookiecutter.json
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
+          source ./{{cookiecutter.profile_slug}}/.github/scripts/workflow-set-value.sh cat cookiecutter.json
 
   _start_notification:
 
@@ -421,7 +417,7 @@ jobs:
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: pre-commit hook test has failed!"
 
   push_repository_test:
-    needs: [_create_configuration, _start_notification, ansible_lint_test, documentation_test, precommit_test, security_test_repo, shellcheck_test, toml_lint_test, yaml_lint_test]
+    needs: [_create_configuration, _start_notification, ansible_lint_test, commit_lint_test, documentation_test, precommit_test, security_test_repo, shellcheck_test, toml_lint_test, yaml_lint_test]
 
     runs-on: ubuntu-latest
     env:
@@ -724,3 +720,10 @@ jobs:
         if: failure()
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: YAML linting checks failed!"
+
+  commit_lint_test:
+    needs: [_create_configuration]
+    uses: ./.github/workflows/.job-80-commit-lint.yml
+    with:
+      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+    secrets: inherit

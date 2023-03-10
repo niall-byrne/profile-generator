@@ -1,0 +1,76 @@
+---
+name: profile-generator-job-commit-lint
+
+on:
+  workflow_call:
+    inputs:
+      CONFIGURATION:
+        description: "The 'cookiecutter.json' file as a configuration object."
+        required: true
+        type: string
+    secrets:
+      SLACK_WEBHOOK:
+        description: "Optional, enables Slack notifications."
+        required: false
+
+env:
+  PROFILE_GENERATOR_SKIP_POETRY: 0
+  PROFILE_GENERATOR_SKIP_PRECOMMIT: 1
+  PROFILE_GENERATOR_PUSH_FALLBACK_REV_RANGE: "HEAD"
+
+jobs:
+
+  run_commitizen:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Commit Lint Test -- Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Commit Lint Test -- Setup Environment
+        run: |
+          source ./.github/scripts/setup.sh
+          source "./{{cookiecutter.profile_slug}}/.github/scripts/pushed_commit_range.sh"
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Commit Lint Test -- Set up Python ${{ fromJSON(inputs.CONFIGURATION)._MAC_MAKER_PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ fromJSON(inputs.CONFIGURATION)._MAC_MAKER_PYTHON_VERSION }}
+
+      - name: Commit Lint Test -- Install Poetry
+        run: |
+          source "./{{cookiecutter.profile_slug}}/.github/scripts/poetry.sh" "install-poetry"
+
+      - name: Commit Lint Test -- Initialize Cache Locations
+        run: |
+          mkdir -p ~/.cache/pypoetry/virtualenvs
+
+      - name: Commit Lint Test -- Mount Poetry Cache
+        uses: actions/cache@v3
+        with:
+          key: poetry-${{ hashFiles('./pyproject.toml') }}-${{ runner.os }}-${{ env.CACHE_TTL }}
+          path: ~/.cache/pypoetry/virtualenvs
+
+      - name: Commit Lint Test -- Install Requirements
+        run: |
+          source "./{{cookiecutter.profile_slug}}/.github/scripts/poetry.sh" "install-project"
+
+      - name: Commit Lint Test -- Lint Pushed Commits
+        run: |
+          poetry run cz check --rev-range "${PUSHED_COMMIT_REV_RANGE}"
+
+      - name: Commit Lint Test -- Report Job Status on Success
+        if: fromJSON(inputs.CONFIGURATION)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
+        run: |
+          "./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh" "${NOTIFICATION}" ":white_check_mark: commit lint checks succeeded!"
+
+      - name: Commit Lint Test -- Report Job Status on Failure
+        if: failure()
+        run: |
+          "./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh" "${NOTIFICATION}" ":x: commit lint checks failed!"

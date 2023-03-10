@@ -1,4 +1,5 @@
 {
+  "ci_commitzen_rev_range": "HEAD",
   "ci_extra_release_content": [
     "## Customizable Text.",
     "This message is appended to the changelog of your GitHub release."
