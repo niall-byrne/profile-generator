@@ -157,73 +157,6 @@ jobs:
         run: |
           ./.github/scripts/notifications.sh "${NOTIFICATION}" ":x: ansible lint checks failed!"
 
-  create_release:
-    needs: {% endraw %}[configuration, _start_notification, ansible_lint, commit_lint_test, documentation_test, security_test,{% if cookiecutter.optional_toml_linting == 'true' %} toml_lint_test,{% endif %} yaml_lint_test]{% raw %}
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Create Release -- Checkout Repository
-        uses: {% endraw %}{{ cookiecutter._GITHUB_ACTION_CHECKOUT }}{% raw %}
-
-      - name: Create Release -- Filter Release Candidates
-        id: filter
-        run: |
-          source .github/scripts/release-candidate.sh "${{ github.event.ref }}"
-
-      - name: Create Release -- Checkout Repository (All Commits)
-        if: steps.filter.outputs.release_candidate == 'TRUE'
-        uses: {% endraw %}{{ cookiecutter._GITHUB_ACTION_CHECKOUT }}{% raw %}
-        with:
-          fetch-depth: 0
-
-      - name: Create Release -- Setup Environment
-        if: steps.filter.outputs.release_candidate == 'TRUE'
-        run: |
-          source ./.github/scripts/setup.sh
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-
-      - name: Create Release -- Install poetry
-        if: steps.filter.outputs.release_candidate == 'TRUE'
-        run: |
-          source ./.github/scripts/poetry.sh "install-poetry"
-
-      - name: Create Release -- Check 'pyproject.toml' Matches Tag
-        if: steps.filter.outputs.release_candidate == 'TRUE'
-        run: |
-          source ./.github/scripts/version.sh
-
-      - name: Create Release -- Generate Changelog
-        if: steps.filter.outputs.release_candidate == 'TRUE'
-        run:
-          source ./.github/scripts/changelog.sh
-
-      - name: Create Release -- Generate GitHub Release Draft
-        if: steps.filter.outputs.release_candidate == 'TRUE'
-        id: create_release
-        uses: {% endraw %}{{ cookiecutter._GITHUB_ACTION_SCRIPT }}{% raw %}
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const script = require('./.github/scripts/release.js')
-            const extraContent = "\n" + JSON.parse(process.env.EXTRA_RELEASE_CONTENT).join("\n")
-            const body = process.env.CHANGE_LOG_CONTENT + extraContent
-            const tag = process.env.BRANCH_OR_TAG;
-            return await script({ body, context, core, github, tag })
-        env:
-          EXTRA_RELEASE_CONTENT: ${{ toJSON(fromJSON(needs.configuration.outputs.configuration).ci_extra_release_content) }}
-
-      - name: Create Release -- Report Job Status (Success)
-        if: steps.filter.outputs.release_candidate == 'TRUE'
-        run: |
-          ./.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: automated release has been created:\nhttps://github.com/${USER_NAME}/${PROJECT_NAME}/releases"
-
-      - name: Create Release -- Report Job Status (Failure)
-        if: failure()
-        run: |
-          ./.github/scripts/notifications.sh "${NOTIFICATION}" ":x: automated release generation failed!"
-
   {%- endraw %}
 
   security_test:
@@ -265,5 +198,13 @@ jobs:
     needs: [configuration]
     uses: ./.github/workflows/.job-80-yaml-lint.yml
     with:
+      VERBOSITY: {% raw %}${{ fromJSON(needs.configuration.outputs.configuration).ci_verbose_notifications }}{% endraw %}
+    secrets: inherit
+
+  create_release:
+    needs: [configuration, _start_notification, ansible_lint, commit_lint_test, documentation_test, security_test,{% if cookiecutter.optional_toml_linting == 'true' %} toml_lint_test,{% endif %} yaml_lint_test]
+    uses: ./.github/workflows/.job-99-create-release.yml
+    with:
+      EXTRA_RELEASE_CONTENT: {% raw %}${{ toJSON(fromJSON(needs.configuration.outputs.configuration).ci_extra_release_content) }}{% endraw %}
       VERBOSITY: {% raw %}${{ fromJSON(needs.configuration.outputs.configuration).ci_verbose_notifications }}{% endraw %}
     secrets: inherit

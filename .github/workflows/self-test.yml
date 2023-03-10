@@ -197,73 +197,6 @@ jobs:
         run: |
           ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: OSX ${{ matrix.os }}, profile application failed!"
 
-  create_release:
-    needs: [apply_profile_test]
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Create Release -- Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Create Release -- Filter Release Candidates
-        id: filter
-        run: |
-          source ./{{cookiecutter.profile_slug}}/.github/scripts/release-candidate.sh "${{ github.event.ref }}"
-
-      - name: Create Release -- Checkout Repository (All Commits)
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Create Release -- Setup Environment
-        if: steps.filter.outputs.release_candidate == 'TRUE'
-        run: |
-          source ./.github/scripts/setup.sh
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-
-      - name: Create Release -- Install Poetry
-        if: steps.filter.outputs.release_candidate == 'TRUE'
-        run: |
-          source ./{{cookiecutter.profile_slug}}/.github/scripts/poetry.sh "install-poetry"
-
-      - name: Create Release -- Check 'pyproject.toml' Matches Tag
-        if: steps.filter.outputs.release_candidate == 'TRUE'
-        run: |
-          source ./{{cookiecutter.profile_slug}}/.github/scripts/version.sh
-
-      - name: Create Release -- Generate Changelog
-        if: steps.filter.outputs.release_candidate == 'TRUE'
-        run:
-          source ./{{cookiecutter.profile_slug}}/.github/scripts/changelog.sh
-
-      - name: Create Release -- Generate GitHub Release Draft
-        if: steps.filter.outputs.release_candidate == 'TRUE'
-        id: create_release
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const script = require('./{{cookiecutter.profile_slug}}/.github/scripts/release.js');
-            const body = process.env.CHANGE_LOG_CONTENT + "\n" + process.env.CHECK_LIST_CONTENT;
-            const tag = process.env.BRANCH_OR_TAG;
-            await script({ body, context, core, github, tag })
-        env:
-          CHECK_LIST_CONTENT: |
-            ## Deployment Checklist
-            - [] Ensure master points to new tag
-
-      - name: Create Release -- Report Job Status on Success
-        if: steps.filter.outputs.release_candidate == 'TRUE'
-        run: |
-          ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: automated release has been created!\nhttps://github.com/${USER_NAME}/${PROJECT_NAME}/releases"
-
-      - name: Create Release -- Report Job Status on Failure
-        if: failure()
-        run: |
-          ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: automated release creation has failed!"
-
   documentation_test:
     needs: [_create_configuration]
     uses: ./.github/workflows/.job-30-documentation.yml
@@ -316,6 +249,13 @@ jobs:
   yaml_lint_test:
     needs: [_create_configuration]
     uses: ./.github/workflows/.job-80-yaml-lint.yml
+    with:
+      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+    secrets: inherit
+
+  create_release:
+    needs: [_create_configuration, apply_profile_test]
+    uses: ./.github/workflows/.job-99-create-release.yml
     with:
       CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
     secrets: inherit
