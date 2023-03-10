@@ -508,39 +508,10 @@ jobs:
 
   security_test_repo:
     needs: [_create_configuration]
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Security Test Repo -- Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: Security Test Repo -- Setup Environment
-        run: |
-          source ./.github/scripts/setup.sh
-          source ./{{cookiecutter.profile_slug}}/.github/scripts/pushed_commit_range.sh
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-
-      - name: Security Test Repo -- Run Trufflehog
-        uses: trufflesecurity/trufflehog@v3.20.0
-        with:
-          path: .
-          base: ${{ env.PUSHED_COMMIT_START }}
-          head: ${{ env.BRANCH_OR_TAG }}
-
-      - name: Security Test Repo -- Report Job Status on Success
-        if: fromJSON(needs._create_configuration.outputs.configuration)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
-        run: |
-          ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: repo security checks succeeded!"
-
-      - name: Security Test Repo -- Report Job Status on Failure
-        if: failure()
-        run: |
-          ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: repo security checks failed!"
+    uses: ./.github/workflows/.job-10-security.yml
+    with:
+      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+    secrets: inherit
 
   commit_lint_test:
     needs: [_create_configuration]
