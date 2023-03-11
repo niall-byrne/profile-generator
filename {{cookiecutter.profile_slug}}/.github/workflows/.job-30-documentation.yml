@@ -39,10 +39,10 @@ jobs:
       - name: Documentation Test -- Report Success
         if: inputs.VERBOSITY == true
         run: |
-          "./.github/scripts/notifications.sh" "${NOTIFICATION}" ":white_check_mark: documentation test was successful!"
+          "./.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: documentation test was successful!"
 
       - name: Documentation Test -- Report Failure
         if: failure()
         run: |
-          "./.github/scripts/notifications.sh" "${NOTIFICATION}" ":x: documentation test has failed!"
+          "./.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: documentation test has failed!"
 {% endraw %}

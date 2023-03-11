@@ -85,10 +85,10 @@ jobs:
       - name: Create Release -- Report Job Status (Success)
         if: steps.filter.outputs.release_candidate == 'TRUE'
         run: |
-          "./.github/scripts/notifications.sh" "${NOTIFICATION}" ":white_check_mark: automated release has been created:\nhttps://github.com/${USER_NAME}/${PROJECT_NAME}/releases"
+          "./.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: automated release has been created:\nhttps://github.com/${USER_NAME}/${PROJECT_NAME}/releases"
 
       - name: Create Release -- Report Job Status (Failure)
         if: failure()
         run: |
-          "./.github/scripts/notifications.sh" "${NOTIFICATION}" ":x: automated release generation failed!"
+          "./.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: automated release generation failed!"
 {% endraw %}

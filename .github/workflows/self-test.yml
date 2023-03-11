@@ -14,7 +14,7 @@ on:
 
 jobs:
 
-  _create_configuration:
+  configuration:
 
     runs-on: ubuntu-latest
     outputs:
@@ -27,128 +27,90 @@ jobs:
       - name: Create Configuration -- Set Cookiecutter Configuration as Output
         id: cookiecutter_configuration
         run: |
-          source ./{{cookiecutter.profile_slug}}/.github/scripts/workflow-set-value.sh cat cookiecutter.json
+          source "./{{cookiecutter.profile_slug}}/.github/scripts/workflow-set-value.sh" cat "cookiecutter.json"
 
-  _start_notification:
+  start:
+    uses: ./.github/workflows/.job-00-start.yml
+    secrets: inherit
 
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Start -- Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Start -- Setup Environment
-        run: |
-          source ./.github/scripts/setup.sh
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-
-      - name: Start -- Report Job Status on Success
-        run: |
-          ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: workflow has started!"
-
-      - name: Start -- Report Job Status on Failure
-        if: failure()
-        run: |
-          ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: error reporting job status!"
-
-  _success_notification:
+  success:
     needs: [create_release]
-
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Success -- Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Success -- Setup Environment
-        run: |
-          source ./.github/scripts/setup.sh
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-
-      - name: Success -- Report Job Status on Success
-        run: |
-          ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: all checks were successful!"
-
-      - name: Success -- Report Job Status on Failure
-        if: failure()
-        run: |
-          ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: error reporting job status!"
+    uses: ./.github/workflows/.job-00-success.yml
+    secrets: inherit
 
   security_test_repo:
-    needs: [_create_configuration]
+    needs: [configuration]
     uses: ./.github/workflows/.job-10-security.yml
     with:
-      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+      CONFIGURATION: ${{ needs.configuration.outputs.configuration }}
     secrets: inherit
 
   documentation_test:
-    needs: [_create_configuration]
+    needs: [configuration]
     uses: ./.github/workflows/.job-30-documentation.yml
     with:
-      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+      CONFIGURATION: ${{ needs.configuration.outputs.configuration }}
     secrets: inherit
 
   ansible_lint_test:
-    needs: [_create_configuration]
+    needs: [configuration]
     uses: ./.github/workflows/.job-40-ansible-lint.yml
     with:
-      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+      CONFIGURATION: ${{ needs.configuration.outputs.configuration }}
     secrets: inherit
 
   precommit_test:
-    needs: [_create_configuration]
+    needs: [configuration]
     uses: ./.github/workflows/.job-50-precommit.yml
     with:
-      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+      CONFIGURATION: ${{ needs.configuration.outputs.configuration }}
     secrets: inherit
 
   push_repository_test:
-    needs: [_create_configuration, _start_notification, ansible_lint_test, commit_lint_test, documentation_test, precommit_test, security_test_repo, shellcheck_test, toml_lint_test, yaml_lint_test]
+    needs: [ansible_lint_test, commit_lint_test, configuration, documentation_test, precommit_test, security_test_repo, shellcheck_test, start, toml_lint_test, yaml_lint_test]
     uses: ./.github/workflows/.job-60-remote-push.yml
     with:
-      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+      CONFIGURATION: ${{ needs.configuration.outputs.configuration }}
     secrets: inherit
 
   commit_lint_test:
-    needs: [_create_configuration]
+    needs: [configuration]
     uses: ./.github/workflows/.job-80-commit-lint.yml
     with:
-      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+      CONFIGURATION: ${{ needs.configuration.outputs.configuration }}
     secrets: inherit
 
   shellcheck_test:
-    needs: [_create_configuration]
+    needs: [configuration]
     uses: ./.github/workflows/.job-80-shell-lint.yml
     with:
-      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+      CONFIGURATION: ${{ needs.configuration.outputs.configuration }}
     secrets: inherit
 
   toml_lint_test:
-    needs: [_create_configuration]
+    needs: [configuration]
     uses: ./.github/workflows/.job-80-toml-lint.yml
     with:
-      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+      CONFIGURATION: ${{ needs.configuration.outputs.configuration }}
     secrets: inherit
 
   yaml_lint_test:
-    needs: [_create_configuration]
+    needs: [configuration]
     uses: ./.github/workflows/.job-80-yaml-lint.yml
     with:
-      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+      CONFIGURATION: ${{ needs.configuration.outputs.configuration }}
     secrets: inherit
 
   mac_maker_test:
-    needs: [_create_configuration, push_repository_test]
+    needs: [configuration, push_repository_test]
     uses: ./.github/workflows/.job-95-mac-maker.yml
     with:
-      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+      CONFIGURATION: ${{ needs.configuration.outputs.configuration }}
     secrets: inherit
 
   create_release:
-    needs: [_create_configuration, mac_maker_test]
+    needs: [configuration, mac_maker_test]
     uses: ./.github/workflows/.job-99-create-release.yml
     with:
-      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+      CONFIGURATION: ${{ needs.configuration.outputs.configuration }}
     secrets: inherit

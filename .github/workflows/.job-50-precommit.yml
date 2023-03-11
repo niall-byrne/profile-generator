@@ -99,9 +99,9 @@ jobs:
       - name: Pre-Commit Test -- Report Job Status on Success
         if: fromJSON(inputs.CONFIGURATION)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh" "${NOTIFICATION}" ":white_check_mark: pre-commit hook test has passed!"
+          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: pre-commit hook test has passed!"
 
       - name: Pre-Commit Test -- Report Job Status on Failure
         if: failure()
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh" "${NOTIFICATION}" ":x: pre-commit hook test has failed!"
+          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: pre-commit hook test has failed!"

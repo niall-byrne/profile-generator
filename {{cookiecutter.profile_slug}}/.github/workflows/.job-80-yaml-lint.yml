@@ -46,10 +46,10 @@ jobs:
       - name: Yaml Lint Test -- Report Job Status (Success)
         if: inputs.VERBOSITY == true
         run: |
-          "./.github/scripts/notifications.sh" "${NOTIFICATION}" ":white_check_mark: YAML linting was successful!"
+          "./.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: YAML linting was successful!"
 
       - name: Yaml Lint Test -- Report Job Status (Failure)
         if: failure()
         run: |
-          "./.github/scripts/notifications.sh" "${NOTIFICATION}" ":x: YAML linting has failed!"
+          "./.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: YAML linting has failed!"
 {% endraw %}

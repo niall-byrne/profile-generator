@@ -41,10 +41,10 @@ jobs:
       - name: Toml Lint -- Report Job Status (Success)
         if: inputs.VERBOSITY == true
         run: |
-          "./.github/scripts/notifications.sh" "${NOTIFICATION}" ":white_check_mark: toml linting was successful!"
+          "./.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: toml linting was successful!"
 
       - name: Toml Lint -- Report Job Status (Failure)
         if: failure()
         run: |
-          "./.github/scripts/notifications.sh" "${NOTIFICATION}" ":x: toml linting has failed!"
+          "./.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: toml linting has failed!"
 {% endraw %}

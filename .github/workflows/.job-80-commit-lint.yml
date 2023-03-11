@@ -68,9 +68,9 @@ jobs:
       - name: Commit Lint Test -- Report Job Status on Success
         if: fromJSON(inputs.CONFIGURATION)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
-          "./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh" "${NOTIFICATION}" ":white_check_mark: commit lint checks succeeded!"
+          "./{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: commit lint checks succeeded!"
 
       - name: Commit Lint Test -- Report Job Status on Failure
         if: failure()
         run: |
-          "./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh" "${NOTIFICATION}" ":x: commit lint checks failed!"
+          "./{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: commit lint checks failed!"

@@ -48,10 +48,10 @@ jobs:
       - name: Security Test -- Report Job Status on Success
         if: inputs.VERBOSITY == true
         run: |
-          "./.github/scripts/notifications.sh" "${NOTIFICATION}" ":white_check_mark: security checks were successful!"
+          "./.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: security checks were successful!"
 
       - name: Security Test -- Report Job Status on Failure
         if: failure()
         run: |
-          "./.github/scripts/notifications.sh" "${NOTIFICATION}" ":x: security checks failed!"
+          "./.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: security checks failed!"
 {% endraw %}
