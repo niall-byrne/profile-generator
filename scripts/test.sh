@@ -8,6 +8,7 @@
 set -eo pipefail
 
 OPTIONAL_TOML_LINTING=1
+OPTIONAL_WORKFLOW_LINTING=1
 
 main() {
 
@@ -16,7 +17,7 @@ main() {
   pushd .. || exit 127
 
     set -eo pipefail
-      echo -e "\n\n${OPTIONAL_TOML_LINTING}\n\n\n\n\n" | cookiecutter profile-generator
+      echo -e "\n\n${OPTIONAL_TOML_LINTING}\n${OPTIONAL_WORKFLOW_LINTING}\n\n\n\n\n" | cookiecutter profile-generator
       cd profile-example || exit 127
     set +eo pipefail
     echo -e "\nExit from this shell when finished testing ..."

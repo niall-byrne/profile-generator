@@ -26,6 +26,7 @@ jobs:
       fail-fast: true
       matrix:
         cookiecutter-toml-selection: [1, 2]
+        cookiecutter-workflow-selection: [1, 2]
       max-parallel: ${{ fromJSON(inputs.CONFIGURATION)._GITHUB_CI_DEFAULT_CONCURRENCY }}
 
     steps:
@@ -49,9 +50,11 @@ jobs:
         run: |
           source "./template/.github/scripts/task-template-requirements.sh"
 
-      - name: Pre-Commit Test -- Install tomll
+      - name: Pre-Commit Test -- Install Binaries
         run: |
           sudo apt-get install -y golang-github-pelletier-go-toml
+          bash <(curl "${{ fromJson(inputs.CONFIGURATION)._GITHUB_CI_ACTIONLINT_SCRIPT_URL }}")
+          sudo mv actionlint /usr/local/bin
 
       - name: Pre-Commit -- Initialize Cache Locations
         run: |
@@ -74,9 +77,10 @@ jobs:
 
       - name: Pre-Commit Test -- Render Template
         run: |
-          source "./template/.github/scripts/task-render-template.sh" "${SELECTION_TOML}" "GitHub Action" "action@github.com"
+          source "./template/.github/scripts/task-render-template.sh" "${SELECTION_TOML}" "${SELECTION_WORKFLOW}" "GitHub Action" "action@github.com"
         env:
           SELECTION_TOML: ${{ matrix.cookiecutter-toml-selection }}
+          SELECTION_WORKFLOW: ${{ matrix.cookiecutter-workflow-selection }}
 
       - name: Pre-Commit Test -- Test Ansible Lint -- Expect Failure
         run: |
@@ -91,17 +95,22 @@ jobs:
         run: |
           source "./template/.github/scripts/job-50-test-precommit.sh" "toml-lint-1"
 
-      - name: Pre-Commit Test -- Test TOML Lint -- Expect Success
+      - name: Pre-Commit Test -- Test TOML Lint -- Expect Failure
         if: matrix.cookiecutter-toml-selection == 1
         run: |
-          source "./template/.github/scripts/job-50-test-precommit.sh" "toml-lint-2"
+          source "./template/.github/scripts/job-50-test-precommit.sh" "toml-lint-1"
+
+      - name: Pre-Commit Test -- Test Workflow Lint -- Expect Failure
+        if: matrix.cookiecutter-workflow-selection == 1
+        run: |
+          source "./template/.github/scripts/job-50-test-precommit.sh" "workflow-lint"
 
       - name: Pre-Commit Test -- Report Job Status on Success
         if: fromJSON(inputs.CONFIGURATION)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: pre-commit hook test has passed!"
+          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: pre-commit (toml-${{ matrix.cookiecutter-toml-selection }}, workflow-${{ matrix.cookiecutter-workflow-selection }}) hook test has passed!"
 
       - name: Pre-Commit Test -- Report Job Status on Failure
         if: failure()
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: pre-commit hook test has failed!"
+          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: pre-commit hook (toml-${{ matrix.cookiecutter-toml-selection }}, workflow-${{ matrix.cookiecutter-workflow-selection }}) test has failed!"

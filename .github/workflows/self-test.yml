@@ -67,7 +67,7 @@ jobs:
     secrets: inherit
 
   push_repository_test:
-    needs: [ansible_lint_test, commit_lint_test, configuration, documentation_test, precommit_test, security_test_repo, shellcheck_test, start, toml_lint_test, yaml_lint_test]
+    needs: [ansible_lint_test, commit_lint_test, configuration, documentation_test, precommit_test, security_test_repo, shellcheck_test, start, toml_lint_test, workflow_lint_test, yaml_lint_test]
     uses: ./.github/workflows/.job-60-remote-push.yml
     with:
       CONFIGURATION: ${{ needs.configuration.outputs.configuration }}
@@ -90,6 +90,13 @@ jobs:
   toml_lint_test:
     needs: [configuration]
     uses: ./.github/workflows/.job-80-toml-lint.yml
+    with:
+      CONFIGURATION: ${{ needs.configuration.outputs.configuration }}
+    secrets: inherit
+
+  workflow_lint_test:
+    needs: [configuration]
+    uses: ./.github/workflows/.job-80-workflow-lint.yml
     with:
       CONFIGURATION: ${{ needs.configuration.outputs.configuration }}
     secrets: inherit
