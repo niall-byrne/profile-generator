@@ -1,16 +1,22 @@
 ---
-name: profile-generator-self-test
-
-# Required GitHub Repository Secrets:
-# REMOTE_TOKEN      - GitHub token with access to the test repository.
-# REMOTE_ORIGIN     - The git remote repository name (organization/repo).
-# SLACK_WEBHOOK     - The slack webhook for build notifications.
+name: profile-generator-workflow-template-test
 
 on:
   push:
   schedule:
     - cron: "0 6 * * 1"
   workflow_dispatch:
+
+#  secrets:
+#    REMOTE_TOKEN:
+#      description: "GitHub token with access to the test repository."
+#      required: true
+#    REMOTE_ORIGIN:
+#      description: "Identifies the test repository as: owner/repository"
+#      required: true
+#    SLACK_WEBHOOK:
+#      description: "Optional, enables Slack notifications."
+#      required: false
 
 jobs:
 

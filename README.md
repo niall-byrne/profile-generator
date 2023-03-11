@@ -8,10 +8,10 @@
 The configuration files themselves comprise a customized [Ansible](https://www.ansible.com/) playbook, allowing you to leverage Ansible's robust tool chain with minimal fuss.
 
 ##### Master Branch (Follows the latest production tag):
-[![profile-generator-self-test](https://github.com/osx-provisioner/profile-generator/actions/workflows/self-test.yml/badge.svg?branch=master)](https://github.com/osx-provisioner/profile-generator/actions/workflows/self-test.yml)
+[![profile-generator-template-test](https://github.com/osx-provisioner/profile-generator/actions/workflows/workflow-template-test.yml/badge.svg?branch=master)](https://github.com/osx-provisioner/profile-generator/actions/workflows/workflow-template-test.yml)
 
 ##### Dev Branch:
-[![profile-generator-self-test](https://github.com/osx-provisioner/profile-generator/actions/workflows/self-test.yml/badge.svg?branch=dev)](https://github.com/osx-provisioner/profile-generator/actions/workflows/self-test.yml)
+[![profile-generator-template-test](https://github.com/osx-provisioner/profile-generator/actions/workflows/workflow-template-test.yml/badge.svg?branch=dev)](https://github.com/osx-provisioner/profile-generator/actions/workflows/workflow-template-test.yml)
 
 ## Quick Start Guide
 

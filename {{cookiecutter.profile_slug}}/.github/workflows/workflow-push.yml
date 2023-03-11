@@ -1,14 +1,19 @@
 ---
-name: {{ cookiecutter.profile_slug}}-push
+name: {{ cookiecutter.profile_slug}}-workflow-push
 
-# Workflow Secrets:
-# SLACK_WEBHOOK              (Required, for slack notifications...)
+#  Before adding additional jobs to this workflow we encourage you examine the configuration.
+#  The file: .github/config/workflows/workflow-push.json may suit your needs.
 
 on:
   push:
   schedule:
     - cron: '0 6 * * 1'
   workflow_dispatch:
+
+#  secrets:
+#    SLACK_WEBHOOK:
+#      description: "Optional, enables Slack notifications."
+#      required: false
 
 env:
   PYTHON_VERSION: "{{ cookiecutter._MAC_MAKER_PYTHON_VERSION }}"
@@ -27,14 +32,14 @@ jobs:
       - name: Create Configuration -- Checkout Repository
         uses: {{ cookiecutter._GITHUB_ACTION_CHECKOUT }}
 
-      - name: Create Configuration -- Validate the 'push.json' File
+      - name: Create Configuration -- Validate the 'workflow-push.json' File
         run: |
-          python -m json.tool ".github/config/workflows/push.json" >> /dev/null
+          python -m json.tool ".github/config/workflows/workflow-push.json" >> /dev/null
 
-      - name: Create Configuration -- Set the 'push.json' Configuration File as Output
+      - name: Create Configuration -- Set the 'workflow-push.json' Configuration File as Output
         id: configuration
         run: |
-          source ".github/scripts/workflow-set-value.sh" cat ".github/config/workflows/push.json"
+          source ".github/scripts/workflow-set-value.sh" cat ".github/config/workflows/workflow-push.json"
 
       - name: Create Configuration -- Set the Mac Maker Python Version as Output
         id: python-version
