@@ -39,7 +39,7 @@ jobs:
       - name: Commit Lint Test -- Setup Environment
         run: |
           source "./.github/scripts/workflow-setup-environment.sh"
-          source "./.github/scripts/pushed_commit_range.sh"
+          source "./.github/scripts/workflow-determine-pushed-commits.sh"
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
