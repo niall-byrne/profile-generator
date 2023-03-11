@@ -40,7 +40,7 @@ jobs:
 
       - name: Ansible Lint -- Install Poetry
         run: |
-          source ".github/scripts/poetry.sh" "install-poetry"
+          source ".github/scripts/task-use-poetry.sh" "install-poetry"
 
       - name: Ansible Lint -- Initialize Cache Locations
         run: |
@@ -63,7 +63,7 @@ jobs:
 
       - name: Ansible Lint -- Install Requirements
         run: |
-          source ".github/scripts/poetry.sh" "install-project"
+          source ".github/scripts/task-use-poetry.sh" "install-project"
 
       - name: Ansible Lint -- Install Ansible Galaxy Dependencies
         run: |

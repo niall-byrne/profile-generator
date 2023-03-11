@@ -47,7 +47,7 @@ jobs:
       - name: Create Release -- Install Poetry
         if: steps.filter.outputs.release_candidate == 'TRUE'
         run: |
-          source "./{{cookiecutter.profile_slug}}/.github/scripts/poetry.sh" "install-poetry"
+          source "./{{cookiecutter.profile_slug}}/.github/scripts/task-use-poetry.sh" "install-poetry"
 
       - name: Create Release -- Check 'pyproject.toml' Matches Tag
         if: steps.filter.outputs.release_candidate == 'TRUE'

@@ -45,7 +45,7 @@ jobs:
 
       - name: Commit Lint Test -- Install Poetry
         run: |
-          source "./{{cookiecutter.profile_slug}}/.github/scripts/poetry.sh" "install-poetry"
+          source "./{{cookiecutter.profile_slug}}/.github/scripts/task-use-poetry.sh" "install-poetry"
 
       - name: Commit Lint Test -- Initialize Cache Locations
         run: |
@@ -59,7 +59,7 @@ jobs:
 
       - name: Commit Lint Test -- Install Requirements
         run: |
-          source "./{{cookiecutter.profile_slug}}/.github/scripts/poetry.sh" "install-project"
+          source "./{{cookiecutter.profile_slug}}/.github/scripts/task-use-poetry.sh" "install-project"
 
       - name: Commit Lint Test -- Lint Pushed Commits
         run: |
