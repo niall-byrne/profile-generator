@@ -42,7 +42,7 @@ jobs:
 
       - name: Documentation Test -- Install Template Requirements
         run: |
-          source "./template/.github/scripts/requirements.sh"
+          source "./template/.github/scripts/task-template-requirements.sh"
 
       - name: Documentation Test -- Render Template
         run: |

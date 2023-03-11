@@ -47,7 +47,7 @@ jobs:
 
       - name: Pre-Commit Test -- Install Template Requirements
         run: |
-          source "./template/.github/scripts/requirements.sh"
+          source "./template/.github/scripts/task-template-requirements.sh"
 
       - name: Pre-Commit Test -- Install tomll
         run: |
