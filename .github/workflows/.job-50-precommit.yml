@@ -56,7 +56,7 @@ jobs:
       - name: Pre-Commit -- Initialize Cache Locations
         run: |
           mkdir -p ~/.cache/pypoetry/virtualenvs
-          source "./template/{{cookiecutter.profile_slug}}/.github/scripts/ansible_cache.sh"  \
+          source "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-setup-ansible-cache.sh"  \
             "$(pwd)/ansible_cache"                                                            \
             ~/.ansible
 

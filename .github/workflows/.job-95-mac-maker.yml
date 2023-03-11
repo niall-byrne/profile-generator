@@ -39,7 +39,7 @@ jobs:
 
       - name: Apply Profile -- Initialize Cache Locations
         run: |
-          source "./template/{{cookiecutter.profile_slug}}/.github/scripts/ansible_cache.sh"  \
+          source "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-setup-ansible-cache.sh"  \
             "$(pwd)/ansible_cache"                                                            \
             "$(pwd)/installer.workspace/${TEMPLATED_NAME}-${PROFILE_GENERATOR_BRANCH_NAME_BASE}/profile"
 

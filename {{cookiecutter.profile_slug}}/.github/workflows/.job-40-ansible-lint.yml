@@ -45,7 +45,7 @@ jobs:
       - name: Ansible Lint -- Initialize Cache Locations
         run: |
           mkdir -p ~/.cache/pypoetry/virtualenvs
-          source ".github/scripts/ansible_cache.sh" \
+          source ".github/scripts/task-setup-ansible-cache.sh" \
             "$(pwd)/ansible_cache"                  \
             ~/.ansible
 
