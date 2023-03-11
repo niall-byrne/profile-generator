@@ -66,7 +66,7 @@ jobs:
 
       - name: Ansible Lint -- Render Template
         run: |
-          source "./template/.github/scripts/template.sh"
+          source "./template/.github/scripts/task-render-template.sh"
 
       - name: Ansible Lint -- Lint Rendered Template
         run: |

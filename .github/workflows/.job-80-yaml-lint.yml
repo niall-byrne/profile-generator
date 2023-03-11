@@ -51,7 +51,7 @@ jobs:
 
       - name: Yaml Lint Test -- Render Template
         run: |
-          source "./template/.github/scripts/template.sh" "${SELECTION_TOML}"
+          source "./template/.github/scripts/task-render-template.sh" "${SELECTION_TOML}"
         env:
           SELECTION_TOML: ${{ matrix.cookiecutter-toml-selection }}
 

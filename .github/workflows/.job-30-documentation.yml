@@ -46,7 +46,7 @@ jobs:
 
       - name: Documentation Test -- Render Template
         run: |
-          source "./template/.github/scripts/template.sh"
+          source "./template/.github/scripts/task-render-template.sh"
 
       - name: Documentation Test -- Check Markdown Links For Template
         uses: gaurav-nelson/github-action-markdown-link-check@v1

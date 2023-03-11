@@ -46,7 +46,7 @@ jobs:
 
       - name: Shellcheck -- Render Template
         run: |
-          source "./template/.github/scripts/template.sh"
+          source "./template/.github/scripts/task-render-template.sh"
 
       - name: Shellcheck -- Shellcheck Scripts
         run: |
