@@ -20,7 +20,7 @@ jobs:
 
       - name: Start -- Setup Environment
         run: |
-          source ./.github/scripts/setup.sh
+          source ./.github/scripts/workflow-setup-environment.sh
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 

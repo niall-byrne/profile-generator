@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# .github/scripts/setup.sh
+# .github/scripts/workflow-setup-environment.sh
 # Configures environment variables for GitHub Actions.
 
 # CI only script.

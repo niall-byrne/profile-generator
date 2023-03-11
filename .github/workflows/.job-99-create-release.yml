@@ -40,7 +40,7 @@ jobs:
       - name: Create Release -- Setup Environment
         if: steps.filter.outputs.release_candidate == 'TRUE'
         run: |
-          source "./.github/scripts/setup.sh"
+          source "./.github/scripts/workflow-setup-environment.sh"
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 

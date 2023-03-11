@@ -33,7 +33,7 @@ jobs:
 
       - name: Apply Profile -- Setup Environment
         run: |
-          source "./template/.github/scripts/setup.sh"
+          source "./template/.github/scripts/workflow-setup-environment.sh"
         env:
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
 

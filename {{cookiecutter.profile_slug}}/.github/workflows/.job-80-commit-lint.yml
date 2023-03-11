@@ -38,7 +38,7 @@ jobs:
 
       - name: Commit Lint Test -- Setup Environment
         run: |
-          source "./.github/scripts/setup.sh"
+          source "./.github/scripts/workflow-setup-environment.sh"
           source "./.github/scripts/pushed_commit_range.sh"
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}

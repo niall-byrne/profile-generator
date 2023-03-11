@@ -31,7 +31,7 @@ jobs:
 
       - name: Security Test Repo -- Setup Environment
         run: |
-          source "./.github/scripts/setup.sh"
+          source "./.github/scripts/workflow-setup-environment.sh"
           source "./{{cookiecutter.profile_slug}}/.github/scripts/pushed_commit_range.sh"
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
