@@ -76,75 +76,6 @@ jobs:
         run: |
           ./{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: error reporting job status!"
 
-  ansible_lint_test:
-    needs: [_create_configuration]
-
-    runs-on: ubuntu-latest
-    env:
-      PROFILE_GENERATOR_SKIP_POETRY: 0
-      PROFILE_GENERATOR_SKIP_PRECOMMIT: 0
-      SELECTION_TOML: 1
-
-    steps:
-
-      - name: Ansible Lint -- Checkout Repository
-        uses: actions/checkout@v3
-        with:
-          path: 'template'
-
-      - name: Ansible Lint -- Setup Environment
-        run: |
-          source ./template/.github/scripts/setup.sh
-        env:
-          WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
-
-      - name: Ansible Lint -- Set up Python ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ fromJson(needs._create_configuration.outputs.configuration)._MAC_MAKER_PYTHON_VERSION }}
-
-      - name: Ansible Lint -- Install Template Requirements
-        run: |
-          source ./template/.github/scripts/requirements.sh
-
-      - name: Ansible Lint -- Initialize Cache Locations
-        run: |
-          mkdir -p ~/.cache/pypoetry/virtualenvs
-          source ./template/{{cookiecutter.profile_slug}}/.github/scripts/ansible_cache.sh  \
-            "$(pwd)/ansible_cache"                                                          \
-            ~/.ansible
-
-      - name: Ansible Lint -- Mount Ansible Cache
-        uses: actions/cache@v3
-        with:
-          key: ansible-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/profile/requirements.yml') }}-${{ env.CACHE_TTL }}
-          path: ansible_cache
-
-      - name: Ansible Lint -- Mount Poetry Cache
-        uses: actions/cache@v3
-        with:
-          key: poetry-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/pyproject.toml') }}-${{ runner.os }}-${{ env.CACHE_TTL }}
-          path: ~/.cache/pypoetry/virtualenvs
-
-      - name: Ansible Lint -- Render Template
-        run: |
-          source ./template/.github/scripts/template.sh
-
-      - name: Ansible Lint -- Lint Rendered Template
-        run: |
-          cd "${TEMPLATED_NAME}/profile"
-          poetry run ansible-lint
-
-      - name: Ansible Lint -- Report Job Status on Success
-        if: fromJSON(needs._create_configuration.outputs.configuration)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
-        run: |
-          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":white_check_mark: ansible linting checks succeeded!"
-
-      - name: Ansible Lint -- Report Job Status on Failure
-        if: failure()
-        run: |
-          ./template/{{cookiecutter.profile_slug}}/.github/scripts/notifications.sh "${NOTIFICATION}" ":x: ansible linting checks failed!"
-
   security_test_repo:
     needs: [_create_configuration]
     uses: ./.github/workflows/.job-10-security.yml
@@ -155,6 +86,13 @@ jobs:
   documentation_test:
     needs: [_create_configuration]
     uses: ./.github/workflows/.job-30-documentation.yml
+    with:
+      CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
+    secrets: inherit
+
+  ansible_lint_test:
+    needs: [_create_configuration]
+    uses: ./.github/workflows/.job-40-ansible-lint.yml
     with:
       CONFIGURATION: ${{ needs._create_configuration.outputs.configuration }}
     secrets: inherit
