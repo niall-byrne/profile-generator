@@ -1,5 +1,5 @@
 ---
-name: {{ cookiecutter.profile_slug }}-job-ansible-lint
+name: {{ cookiecutter.project_slug }}-job-ansible-lint
 {% raw %}
 on:
   workflow_call:

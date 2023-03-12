@@ -1,5 +1,5 @@
 ---
-- name: "Profile - {{cookiecutter.profile_slug}}"
+- name: "Profile - {{cookiecutter.project_slug}}"
   hosts: localhost
   connection: local
 

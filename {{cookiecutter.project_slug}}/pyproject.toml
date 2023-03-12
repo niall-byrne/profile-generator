@@ -13,7 +13,7 @@
   [tool.poetry]
     authors = ["{{cookiecutter.author}} <{{cookiecutter.email}}>"]
     description = "{{cookiecutter.description}}"
-    name = "{{cookiecutter.profile_slug}}"
+    name = "{{cookiecutter.project_slug}}"
     version = "0.1.0"
 
     [tool.poetry.dependencies]

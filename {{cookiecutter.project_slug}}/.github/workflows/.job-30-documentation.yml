@@ -1,5 +1,5 @@
 ---
-name: {{ cookiecutter.profile_slug }}-job-documentation
+name: {{ cookiecutter.project_slug }}-job-documentation
 {% raw %}
 on:
   workflow_call:

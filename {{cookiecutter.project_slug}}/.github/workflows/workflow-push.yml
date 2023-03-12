@@ -1,5 +1,5 @@
 ---
-name: {{ cookiecutter.profile_slug}}-workflow-push
+name: {{ cookiecutter.project_slug}}-workflow-push
 
 #  Before adding additional jobs to this workflow we encourage you examine the configuration.
 #  The file: .github/config/workflows/workflow-push.json may suit your needs.

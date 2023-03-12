@@ -48,20 +48,20 @@ jobs:
       - name: Ansible Lint -- Initialize Cache Locations
         run: |
           mkdir -p ~/.cache/pypoetry/virtualenvs
-          source "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-setup-ansible-cache.sh"  \
+          source "./template/{{cookiecutter.project_slug}}/.github/scripts/task-setup-ansible-cache.sh"  \
             "$(pwd)/ansible_cache"                                                            \
             ~/.ansible
 
       - name: Ansible Lint -- Mount Ansible Cache
         uses: actions/cache@v3
         with:
-          key: ansible-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/profile/requirements.yml') }}-${{ env.CACHE_TTL }}
+          key: ansible-${{ hashFiles('./template/{{cookiecutter.project_slug}}/profile/requirements.yml') }}-${{ env.CACHE_TTL }}
           path: ansible_cache
 
       - name: Ansible Lint -- Mount Poetry Cache
         uses: actions/cache@v3
         with:
-          key: poetry-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/pyproject.toml') }}-${{ runner.os }}-${{ env.CACHE_TTL }}
+          key: poetry-${{ hashFiles('./template/{{cookiecutter.project_slug}}/pyproject.toml') }}-${{ runner.os }}-${{ env.CACHE_TTL }}
           path: ~/.cache/pypoetry/virtualenvs
 
       - name: Ansible Lint -- Render Template
@@ -76,9 +76,9 @@ jobs:
       - name: Ansible Lint -- Report Job Status on Success
         if: fromJSON(inputs.CONFIGURATION)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: ansible linting checks succeeded!"
+          "./template/{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: ansible linting checks succeeded!"
 
       - name: Ansible Lint -- Report Job Status on Failure
         if: failure()
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: ansible linting checks failed!"
+          "./template/{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: ansible linting checks failed!"

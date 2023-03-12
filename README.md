@@ -36,18 +36,18 @@ This template uses a tool called [cookiecutter](https://cookiecutter.readthedocs
 The default configuration has some excellent functionality out of the box:
 - Installs the [Homebrew](https://brew.sh/) cli tool, with selected packages.
   - You may see a "Please Install Me" Xcode popup dialogue, safely ignore this and wait for your finished Mac.
-- A centralized package manifest in the [profile/vars/main.yml](./{{cookiecutter.profile_slug}}/profile/vars/main.yml) file.
+- A centralized package manifest in the [profile/vars/main.yml](./{{cookiecutter.project_slug}}/profile/vars/main.yml) file.
 - A functional [ClamAV](https://github.com/Cisco-Talos/clamav) install to protect you against malicious downloads.
 - Node.js and Python, managed by [asdf](https://asdf-vm.com/#/).
   - Activate these language installs by following [these](https://asdf-vm.com/#/core-manage-asdf) instructions for your shell.
-- Easily mix and match Ansible roles in the [profile/install.yml](./{{cookiecutter.profile_slug}}/profile/install.yml) file.
+- Easily mix and match Ansible roles in the [profile/install.yml](./{{cookiecutter.project_slug}}/profile/install.yml) file.
 
 Use one of the many existing OSX Ansible roles to customize your installation:
 - [Mac Maker's Ansible Roles](https://galaxy.ansible.com/osx_provisioner)
 - [Jeff Geerling's Ansible Collection](https://galaxy.ansible.com/geerlingguy/mac)
 - [Search on Ansible Galaxy](https://galaxy.ansible.com/search?deprecated=false&keywords=osx&order_by=-relevance&page=1)
 
-Update your [profile/requirements.yml](./{{cookiecutter.profile_slug}}/profile/requirements.yml) file to add more [Ansible Galaxy](https://galaxy.ansible.com/) content as needed.
+Update your [profile/requirements.yml](./{{cookiecutter.project_slug}}/profile/requirements.yml) file to add more [Ansible Galaxy](https://galaxy.ansible.com/) content as needed.
 
 ## Python Customization
 
@@ -55,7 +55,7 @@ If for some reason you need to customize the Python development environment for 
 
 #### Managing Python Dependencies:
 
-Use the [pyproject.toml](./{{cookiecutter.profile_slug}}/pyproject.toml) file to store your project dependencies in accordance with [PEP 518](https://www.python.org/dev/peps/pep-0518/) and [Poetry Dependency Management](https://python-poetry.org/docs/pyproject/#dependencies-and-dev-dependencies).
+Use the [pyproject.toml](./{{cookiecutter.project_slug}}/pyproject.toml) file to store your project dependencies in accordance with [PEP 518](https://www.python.org/dev/peps/pep-0518/) and [Poetry Dependency Management](https://python-poetry.org/docs/pyproject/#dependencies-and-dev-dependencies).
 
 Poetry is leveraged to manage the Python dependencies:
 - [Adding Python Packages with Poetry](https://python-poetry.org/docs/cli/#add)
@@ -74,7 +74,7 @@ You can also conveniently execute commands inside the Python virtual environment
 
 ### Maintaining your pyproject.toml File
 
-The template also presents the option to create a pre-commit hook, and a GitHub workflow step to format the [pyproject.toml](./{{cookiecutter.profile_slug}}/pyproject.toml) file:
+The template also presents the option to create a pre-commit hook, and a GitHub workflow step to format the [pyproject.toml](./{{cookiecutter.project_slug}}/pyproject.toml) file:
 - This is accomplished via the golang binary [tomll](https://github.com/pelletier/go-toml).
 - This is the most robust TOML formatter I'm aware of right now.
 - However, to use it, you'll need to install the binary on your locale system.
@@ -117,7 +117,7 @@ Mac Maker itself also writes some data overtop of the role (ephemerally at run t
 Integrations with the following third party services are configured during templating:
 
 - [GitHub Workflows](https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions)
-  - The templated workflows can be found [here](./{{cookiecutter.profile_slug}}/.github/workflows).
+  - The templated workflows can be found [here](./{{cookiecutter.project_slug}}/.github/workflows).
 
 ## License
 

@@ -32,7 +32,7 @@ jobs:
       - name: Security Test Repo -- Setup Environment
         run: |
           source "./.github/scripts/workflow-setup-environment.sh"
-          source "./{{cookiecutter.profile_slug}}/.github/scripts/workflow-determine-pushed-commits.sh"
+          source "./{{cookiecutter.project_slug}}/.github/scripts/workflow-determine-pushed-commits.sh"
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
@@ -47,9 +47,9 @@ jobs:
       - name: Security Test Repo -- Report Job Status on Success
         if: fromJSON(inputs.CONFIGURATION)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
-          "./{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: repo security checks succeeded!"
+          "./{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: repo security checks succeeded!"
 
       - name: Security Test Repo -- Report Job Status on Failure
         if: failure()
         run: |
-          "./{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: repo security checks failed!"
+          "./{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: repo security checks failed!"

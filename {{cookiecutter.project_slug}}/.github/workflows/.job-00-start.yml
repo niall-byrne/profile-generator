@@ -1,5 +1,5 @@
 ---
-name: {{ cookiecutter.profile_slug }}-job-start
+name: {{ cookiecutter.project_slug }}-job-start
 {% raw %}
 on:
   workflow_call:

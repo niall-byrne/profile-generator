@@ -98,9 +98,9 @@ jobs:
       - name: Push Test -- Report Job Status on Success
         if: fromJSON(inputs.CONFIGURATION)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: remote push (all-optionals-${{ matrix.cookiecutter-optionals-selection }}) has been triggered!"
+          "./template/{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: remote push (all-optionals-${{ matrix.cookiecutter-optionals-selection }}) has been triggered!"
 
       - name: Push Test -- Report Job Status on Failure
         if: failure()
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: remote push (all-optionals-${{ matrix.cookiecutter-optionals-selection }}) failed to trigger!"
+          "./template/{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: remote push (all-optionals-${{ matrix.cookiecutter-optionals-selection }}) failed to trigger!"

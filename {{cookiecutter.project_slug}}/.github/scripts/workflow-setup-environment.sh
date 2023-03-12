@@ -9,7 +9,7 @@ set -eo pipefail
 
 main() {
 
-  PROJECT_NAME="{{ cookiecutter.profile_slug }}"
+  PROJECT_NAME="{{ cookiecutter.project_slug }}"
   USER_NAME="{{ cookiecutter.github_handle }}"
 
   BRANCH_OR_TAG="$(echo "${GITHUB_REF}" | sed 's/refs\/heads\///g' | sed 's/refs\/tags\///g')"

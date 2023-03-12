@@ -67,9 +67,9 @@ jobs:
       - name: Toml Lint -- Report Job Status (Success)
         if: fromJSON(inputs.CONFIGURATION)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: toml linting was successful!"
+          "./template/{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: toml linting was successful!"
 
       - name: Toml Lint -- Report Job Status (Failure)
         if: failure()
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: toml linting has failed!"
+          "./template/{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: toml linting has failed!"

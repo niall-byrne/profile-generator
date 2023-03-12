@@ -1,5 +1,5 @@
 ---
-name: {{ cookiecutter.profile_slug }}-job-create-release
+name: {{ cookiecutter.project_slug }}-job-create-release
 {% raw %}
 on:
   workflow_call:

@@ -1,5 +1,5 @@
 ---
-name: {{ cookiecutter.profile_slug }}-job-toml-lint
+name: {{ cookiecutter.project_slug }}-job-toml-lint
 {% raw %}
 on:
   workflow_call:

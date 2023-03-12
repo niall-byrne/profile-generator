@@ -63,9 +63,9 @@ jobs:
       - name: Shellcheck -- Report Job Status on Success
         if: fromJSON(inputs.CONFIGURATION)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: shellcheck checks succeeded!"
+          "./template/{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: shellcheck checks succeeded!"
 
       - name: Shellcheck -- Report Job Status on Failure
         if: failure()
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: shellcheck checks failed!"
+          "./template/{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: shellcheck checks failed!"

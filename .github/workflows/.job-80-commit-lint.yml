@@ -33,7 +33,7 @@ jobs:
       - name: Commit Lint Test -- Setup Environment
         run: |
           source ./.github/scripts/workflow-setup-environment.sh
-          source "./{{cookiecutter.profile_slug}}/.github/scripts/workflow-determine-pushed-commits.sh"
+          source "./{{cookiecutter.project_slug}}/.github/scripts/workflow-determine-pushed-commits.sh"
         env:
           GITHUB_CONTEXT: ${{ toJson(github) }}
           WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
@@ -45,7 +45,7 @@ jobs:
 
       - name: Commit Lint Test -- Install Poetry
         run: |
-          source "./{{cookiecutter.profile_slug}}/.github/scripts/task-use-poetry.sh" "install-poetry"
+          source "./{{cookiecutter.project_slug}}/.github/scripts/task-use-poetry.sh" "install-poetry"
 
       - name: Commit Lint Test -- Initialize Cache Locations
         run: |
@@ -59,7 +59,7 @@ jobs:
 
       - name: Commit Lint Test -- Install Requirements
         run: |
-          source "./{{cookiecutter.profile_slug}}/.github/scripts/task-use-poetry.sh" "install-project"
+          source "./{{cookiecutter.project_slug}}/.github/scripts/task-use-poetry.sh" "install-project"
 
       - name: Commit Lint Test -- Lint Pushed Commits
         run: |
@@ -68,9 +68,9 @@ jobs:
       - name: Commit Lint Test -- Report Job Status on Success
         if: fromJSON(inputs.CONFIGURATION)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
-          "./{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: commit lint checks succeeded!"
+          "./{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: commit lint checks succeeded!"
 
       - name: Commit Lint Test -- Report Job Status on Failure
         if: failure()
         run: |
-          "./{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: commit lint checks failed!"
+          "./{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: commit lint checks failed!"

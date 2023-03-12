@@ -1,6 +1,6 @@
 {
     "profile_name": "Profile Example",
-    "profile_slug": "{{ cookiecutter.profile_name|slugify }}",
+    "project_slug": "{{ cookiecutter.profile_name|slugify }}",
     "optional_toml_linting": ["true", "false"],
     "optional_workflow_linting": ["true", "false"],
     "description": "An example Mac Maker profile.",

@@ -81,9 +81,9 @@ jobs:
       - name: Yaml Lint Test -- Report Job Status on Success
         if: fromJSON(inputs.CONFIGURATION)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: YAML linting (toml-${{ matrix.cookiecutter-toml-selection }}, workflow-${{ matrix.cookiecutter-workflow-selection }}) checks succeeded!"
+          "./template/{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: YAML linting (toml-${{ matrix.cookiecutter-toml-selection }}, workflow-${{ matrix.cookiecutter-workflow-selection }}) checks succeeded!"
 
       - name: Yaml Lint Test -- Report Job Status on Failure
         if: failure()
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: YAML linting (toml-${{ matrix.cookiecutter-toml-selection }}, workflow-${{ matrix.cookiecutter-workflow-selection }}) checks failed!"
+          "./template/{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: YAML linting (toml-${{ matrix.cookiecutter-toml-selection }}, workflow-${{ matrix.cookiecutter-workflow-selection }}) checks failed!"

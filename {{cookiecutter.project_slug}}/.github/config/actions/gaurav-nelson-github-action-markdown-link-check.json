@@ -14,7 +14,7 @@
   ],
   "ignorePatterns": [
     {
-      "pattern": "^https://github.com/{{cookiecutter.github_handle}}/{{cookiecutter.profile_slug}}/"
+      "pattern": "^https://github.com/{{cookiecutter.github_handle}}/{{cookiecutter.project_slug}}/"
     }
   ]
 }

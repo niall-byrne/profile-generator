@@ -51,7 +51,7 @@ jobs:
       - name: Documentation Test -- Check Markdown Links For Template
         uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
-          config-file: 'template/{{cookiecutter.profile_slug}}/.github/config/actions/gaurav-nelson-github-action-markdown-link-check.json'
+          config-file: 'template/{{cookiecutter.project_slug}}/.github/config/actions/gaurav-nelson-github-action-markdown-link-check.json'
           use-quiet-mode: 'no'
           use-verbose-mode: 'yes'
           folder-path: 'template, template/.github/workflows'
@@ -60,7 +60,7 @@ jobs:
       - name: Documentation Test -- Check Markdown Links For Rendered Template
         uses: gaurav-nelson/github-action-markdown-link-check@v1
         with:
-          config-file: 'template/{{cookiecutter.profile_slug}}/.github/config/actions/gaurav-nelson-github-action-markdown-link-check.json'
+          config-file: 'template/{{cookiecutter.project_slug}}/.github/config/actions/gaurav-nelson-github-action-markdown-link-check.json'
           use-quiet-mode: 'no'
           use-verbose-mode: 'yes'
           folder-path: ${{ env.TEMPLATED_NAME }}
@@ -69,9 +69,9 @@ jobs:
       - name: Documentation Test -- Report Job Status on Success
         if: fromJSON(inputs.CONFIGURATION)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: documentation checks succeeded!"
+          "./template/{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: documentation checks succeeded!"
 
       - name: Documentation Test -- Report Job Status on Failure
         if: failure()
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: documentation checks failed!"
+          "./template/{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: documentation checks failed!"

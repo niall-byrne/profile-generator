@@ -59,20 +59,20 @@ jobs:
       - name: Pre-Commit -- Initialize Cache Locations
         run: |
           mkdir -p ~/.cache/pypoetry/virtualenvs
-          source "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-setup-ansible-cache.sh"  \
+          source "./template/{{cookiecutter.project_slug}}/.github/scripts/task-setup-ansible-cache.sh"  \
             "$(pwd)/ansible_cache"                                                            \
             ~/.ansible
 
       - name: Pre-Commit -- Mount Ansible Cache
         uses: actions/cache@v3
         with:
-          key: ansible-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/profile/requirements.yml') }}-${{ env.CACHE_TTL }}
+          key: ansible-${{ hashFiles('./template/{{cookiecutter.project_slug}}/profile/requirements.yml') }}-${{ env.CACHE_TTL }}
           path: ansible_cache
 
       - name: Pre-Commit Test -- Mount Poetry Cache
         uses: actions/cache@v3
         with:
-          key: poetry-${{ hashFiles('./template/{{cookiecutter.profile_slug}}/pyproject.toml') }}-${{ runner.os }}-${{ env.CACHE_TTL }}
+          key: poetry-${{ hashFiles('./template/{{cookiecutter.project_slug}}/pyproject.toml') }}-${{ runner.os }}-${{ env.CACHE_TTL }}
           path: ~/.cache/pypoetry/virtualenvs
 
       - name: Pre-Commit Test -- Render Template
@@ -108,9 +108,9 @@ jobs:
       - name: Pre-Commit Test -- Report Job Status on Success
         if: fromJSON(inputs.CONFIGURATION)._GITHUB_CI_DEFAULT_VERBOSE_NOTIFICATIONS == true
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: pre-commit (toml-${{ matrix.cookiecutter-toml-selection }}, workflow-${{ matrix.cookiecutter-workflow-selection }}) hook test has passed!"
+          "./template/{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":white_check_mark: pre-commit (toml-${{ matrix.cookiecutter-toml-selection }}, workflow-${{ matrix.cookiecutter-workflow-selection }}) hook test has passed!"
 
       - name: Pre-Commit Test -- Report Job Status on Failure
         if: failure()
         run: |
-          "./template/{{cookiecutter.profile_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: pre-commit hook (toml-${{ matrix.cookiecutter-toml-selection }}, workflow-${{ matrix.cookiecutter-workflow-selection }}) test has failed!"
+          "./template/{{cookiecutter.project_slug}}/.github/scripts/task-slack-notification.sh" "${NOTIFICATION}" ":x: pre-commit hook (toml-${{ matrix.cookiecutter-toml-selection }}, workflow-${{ matrix.cookiecutter-workflow-selection }}) test has failed!"

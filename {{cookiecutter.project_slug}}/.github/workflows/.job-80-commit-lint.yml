@@ -1,5 +1,5 @@
 ---
-name: {{ cookiecutter.profile_slug }}-job-commit-lint
+name: {{ cookiecutter.project_slug }}-job-commit-lint
 {% raw %}
 on:
   workflow_call:
