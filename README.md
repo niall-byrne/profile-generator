@@ -112,13 +112,6 @@ Mac Maker itself also writes some data overtop of the role (ephemerally at run t
   
 **\*** **(these paths are marked for deprecation, soon freeing them up for use)**
 
-## Third Party Integrations
-
-Integrations with the following third party services are configured during templating:
-
-- [GitHub Workflows](https://docs.github.com/en/free-pro-team@latest/actions/reference/workflow-syntax-for-github-actions)
-  - The templated workflows can be found [here](./{{cookiecutter.project_slug}}/.github/workflows).
-
 ## License
 
 [GNU GPL](LICENSE)

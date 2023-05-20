@@ -3,5 +3,6 @@
   become: True
   become_user: "{{ asdf_user }}"
   ansible.builtin.command: "bash -lc 'source {{ asdf_source }}; asdf reshim python'"
+  changed_when: true
   args:
     chdir: "{{ asdf_user_home }}"

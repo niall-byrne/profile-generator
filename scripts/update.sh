@@ -22,7 +22,6 @@ set -eo pipefail
 PROFILE_GENERATOR_TEMPLATE_SOURCE="${PROFILE_GENERATOR_TEMPLATE_SOURCE-"https://github.com/osx-provisioner/profile-generator.git"}"
 PROFILE_GENERATOR_UPDATE_BRANCH="${PROFILE_GENERATOR_UPDATE_BRANCH-"update-template"}"
 
-
 error() {
   echo "USAGE: ./update.sh [ROLE FOLDER] [TEMPLATE TAG or BRANCH] [--force]"
   exit 127
@@ -34,40 +33,39 @@ error() {
 main() {
 
   pushd "$1" || error
-    if [[ "$3" == "--force" ]]; then
-      if git branch | grep "${PROFILE_GENERATOR_UPDATE_BRANCH}"; then
-        set +eo pipefail
-          git checkout master
-          git reset origin/master
-          git clean -fd .
-          git branch -D "${PROFILE_GENERATOR_UPDATE_BRANCH}"
-          rm -rf .git/cookiecutter
-        set -eo pipefail
-      fi
+  if [[ "$3" == "--force" ]]; then
+    if git branch | grep "${PROFILE_GENERATOR_UPDATE_BRANCH}"; then
+      set +eo pipefail
+      git checkout master
+      git reset origin/master
+      git clean -fd .
+      git branch -D "${PROFILE_GENERATOR_UPDATE_BRANCH}"
+      rm -rf .git/cookiecutter
+      set -eo pipefail
     fi
+  fi
 
-    PROFILE_GENERATOR_SKIP_GIT_INIT=1                                     \
-    PROFILE_GENERATOR_SKIP_POETRY=1                                       \
-    PROFILE_GENERATOR_SKIP_PRECOMMIT=1                                    \
-    cookiecutter_project_upgrader                                         \
-      -c .cookiecutter/cookiecutter.json                                  \
-      -b "${PROFILE_GENERATOR_UPDATE_BRANCH}"                             \
-      -u "$2"                                                             \
-      -f "${PROFILE_GENERATOR_TEMPLATE_SOURCE}"                           \
-      -e "profile"                                                        \
-      -e ".gitignore"                                                     \
-      -e "LICENSE"                                                        \
-      -e "README.md"
+  TEMPLATE_SKIP_GIT_INIT=1 \
+    TEMPLATE_SKIP_POETRY=1 \
+    TEMPLATE_SKIP_PRECOMMIT=1 \
+    cookiecutter_project_upgrader \
+    -c .cookiecutter/cookiecutter.json \
+    -b "${PROFILE_GENERATOR_UPDATE_BRANCH}" \
+    -u "$2" \
+    -f "${PROFILE_GENERATOR_TEMPLATE_SOURCE}" \
+    -e "profile" \
+    -e ".gitignore" \
+    -e "LICENSE" \
+    -e "README.md"
 
-     git checkout update-template
+  git checkout update-template
 
-    echo -e "\n==========="
-    echo -e "\nThe following files differ from the template's newest version:"
-    git diff HEAD~1 --summary
-    echo -e "\nPlease review these changes carefully, and exit from this shell when finished.  Nothing has been pushed or merged yet."
+  echo -e "\n==========="
+  echo -e "\nThe following files differ from the template's newest version:"
+  git diff HEAD~1 --summary
+  echo -e "\nPlease review these changes carefully, and exit from this shell when finished.  Nothing has been pushed or merged yet."
 
-    bash
-
+  bash
   popd || true
 
 }

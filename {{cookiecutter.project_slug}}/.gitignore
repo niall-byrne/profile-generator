@@ -11,3 +11,5 @@ profile/env
 profile/inventory
 profile/roles
 spec.json
+.cicd-tools/boxes/*
+!.cicd-tools/boxes/bootstrap
