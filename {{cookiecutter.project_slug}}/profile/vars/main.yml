@@ -1,5 +1,5 @@
 ---
-# osx_provisioner.homebrew-retry
+# osx_provisioner.collection.homebrew-retry
 brew_user: "{{ lookup('env', 'USER') }}"
 brew_retries: 3
 brew_taps: []
@@ -12,7 +12,7 @@ brew_packages:
 brew_casks:
   - google-chrome
 
-# osx_provisioner.asdf
+# osx_provisioner.collection.asdf
 # Add Additional Language Distributions and Versions Here
 # https://asdf-vm.com/#/
 asdf_user: "{{ lookup('env', 'USER') }}"

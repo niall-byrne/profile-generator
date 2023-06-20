@@ -14,9 +14,9 @@
   roles:
     - elliotweiser.osx-command-line-tools
     - geerlingguy.mac.homebrew
-    - osx_provisioner.homebrew_retry
-    - osx_provisioner.clamav
-    - osx_provisioner.asdf
+    - osx_provisioner.collection.homebrew_retry
+    - osx_provisioner.collection.clamav
+    - osx_provisioner.collection.asdf
 
   post_tasks:
     - name: Run Post Install Tasks
