@@ -67,8 +67,9 @@ jobs:
     needs: [configuration]
     secrets:
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-    uses: niall-byrne/cicd-tools/.github/workflows/job-50-poetry-test_basic_precommit_hooks.yml@master
+    uses: niall-byrne/cicd-tools/.github/workflows/job-50-poetry-test_basic_precommit_hooks.yml@dev
     with:
+      CHECK_CREDENTIALS: true
       CHECK_TOML: {% endraw %}{{ cookiecutter.optional_toml_linting }}{% raw %}
       CHECK_WORKFLOW: {% endraw %}{{ cookiecutter.optional_workflow_linting }}{% raw %}
       CONCURRENCY: ${{ fromJSON(needs.configuration.outputs.JSON_FILE_DATA).ci_concurrency_limit }}

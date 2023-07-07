@@ -38,7 +38,7 @@ repos:
           - "./profile/.yamllint.yml"
         stages: [commit]
   - repo: https://github.com/cicd-tools-org/pre-commit.git
-    rev: 0.1.0
+    rev: 0.2.0
     hooks:
       - id: format-shell
         args:
@@ -67,5 +67,6 @@ repos:
           - "--source-path=SCRIPTDIR"
           - "--exclude=SC2317"
           - "-x"
+      - id: security-credentials
       - id: spelling-commit-message
       - id: spelling-markdown
