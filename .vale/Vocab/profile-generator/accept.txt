@@ -12,6 +12,7 @@ darwin
 env
 golang
 mac_maker
+readthedocs
 rebase
 rebasing
 semvar

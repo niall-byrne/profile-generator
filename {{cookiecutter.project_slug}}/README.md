@@ -69,7 +69,7 @@ There some configuration files you can fine tune as you see fit:
 
 The `profile` folder contains a special [\_\_precheck\_\_](profile/__precheck__) sub-folder with configuration used by [Mac Maker](https://github.com/osx-provisioner/mac_maker) to help end users apply the Profile to their machines.
 
-Please read the [Mac Maker Profile](https://mac-maker.readthedocs.io/en/latest/project/3.profiles.html) documentation for details on this. (It's a quick read.)
+Please read the [Mac Maker Profile](https://mac-maker.readthedocs.io/en/latest/project/4.profiles.html) documentation for details on this. (It's a quick read.)
 
 ## Developing Your Profile
 
@@ -80,7 +80,7 @@ When developing your profile locally, it's handy to setup a `spec.json` file tha
 
 (A common use case for `spec.json` files, is to clone a _private_ git repository to a USB key, and configure the `spec.json` to point to the USB key locations.)
 
-Please read the [Mac Maker Job Spec](https://mac-maker.readthedocs.io/en/latest/project/4.spec_files.html) documentation for details on this. (It's a quick read.)
+Please read the [Mac Maker Job Spec](https://mac-maker.readthedocs.io/en/latest/project/5.spec_files.html) documentation for details on this. (It's a quick read.)
 
 ## Securing Your Profile
 
