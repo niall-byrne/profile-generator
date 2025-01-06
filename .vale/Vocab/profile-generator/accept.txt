@@ -13,6 +13,8 @@ dockerfile
 env
 golang
 mac_maker
+monterey
+osx|OSX
 readthedocs
 rebase
 rebasing
